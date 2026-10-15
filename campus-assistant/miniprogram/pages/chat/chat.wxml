@@ -1,0 +1,29 @@
+<view class="chat-shell">
+  <view class="chat-top"><view><text class="assistant-name">校园知答</text><text class="assistant-status">已发布知识检索 · {{roleName}}</text></view><button class="new-chat" bindtap="clear">新对话 ＋</button></view>
+  <scroll-view class="chat-scroll" scroll-y="{{true}}" scroll-into-view="{{scrollTarget}}" scroll-with-animation="{{true}}">
+    <view class="chat-content">
+      <view class="welcome" wx:if="{{!messages.length}}">
+        <view class="welcome-logo">知</view><view class="welcome-title">你好，有什么校园问题？</view><view class="welcome-desc">我会从已发布的知识中查找答案，<br/>并为你附上来源和办理指引。</view>
+        <button class="starter" wx:for="{{starters}}" wx:key="*this" data-question="{{item}}" bindtap="askSuggestion"><text>{{item}}</text><text>↗</text></button>
+      </view>
+      <view wx:for="{{messages}}" wx:key="id" wx:for-item="message" class="message {{message.speaker}}" id="msg-{{message.id}}">
+        <view wx:if="{{message.speaker === 'user'}}" class="user-bubble"><text selectable="{{true}}">{{message.text}}</text></view>
+        <block wx:else>
+          <view class="answer-label"><text class="mini-avatar">知</text><text>校园知答</text><text class="answer-kind">{{message.kind === 'answer' ? '知识库答复' : message.kind === 'clarify' ? '请补充信息' : '暂无法确认'}}</text></view>
+          <view class="answer-bubble">
+            <view class="context-hint" wx:if="{{message.contextual}}">接着「{{message.title}}」说明</view>
+            <text class="answer-text" selectable="{{true}}">{{message.text}}</text>
+            <view class="answer-steps" wx:if="{{message.steps.length}}"><view class="step" wx:for="{{message.steps}}" wx:key="index" wx:for-item="step"><text class="step-number">{{index + 1}}</text><text>{{step}}</text></view></view>
+            <view class="channel" wx:if="{{message.channel}}"><text class="channel-label">{{message.kind === 'answer' ? '咨询途径' : '建议途径'}}</text><text>{{message.channel}}</text></view>
+            <button class="source-card" wx:if="{{message.source}}" data-id="{{message.knowledgeId}}" bindtap="openSource"><view class="source-title">资料来源 <text>查看当前指南 ↗</text></view><view>{{message.source}}</view><view class="source-meta">v{{message.version}} · {{message.updatedAt}} · {{message.scope}}</view></button>
+            <view class="answer-demo" wx:if="{{message.isDemo}}">以上为演示资料，实际办理请核实本校公告。</view>
+          </view>
+          <view class="suggestions" wx:if="{{message.suggestions.length}}"><button wx:for="{{message.suggestions}}" wx:key="*this" wx:for-item="suggestion" data-question="{{suggestion}}" bindtap="askSuggestion">{{suggestion}} ↗</button></view>
+          <view class="feedback"><text>有帮助吗？</text><button class="{{message.feedback === 'resolved' ? 'selected' : ''}}" data-id="{{message.id}}" data-value="resolved" bindtap="feedback">有帮助</button><button class="{{message.feedback === 'unresolved' ? 'selected' : ''}}" data-id="{{message.id}}" data-value="unresolved" bindtap="feedback">待改进</button></view>
+        </block>
+      </view>
+      <view class="scroll-end"></view>
+    </view>
+  </scroll-view>
+  <view class="composer"><view class="input-row"><input value="{{input}}" placeholder="问点校园里的事…" maxlength="300" confirm-type="send" bindinput="inputChange" bindconfirm="send" adjust-position="{{true}}"/><button class="send-button" disabled="{{busy || !input}}" bindtap="send">发送 ↑</button></view><view class="composer-hint">本地检索演示 · 请勿输入密码、证件号等个人信息</view></view>
+</view>

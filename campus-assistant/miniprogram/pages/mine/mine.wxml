@@ -1,0 +1,10 @@
+<view class="page">
+  <view class="eyebrow">MY CAMPUS</view><view class="page-title">我的校园助手</view>
+  <view class="identity card"><view class="avatar">{{role.id === 'student' ? '同' : role.id === 'maintainer' ? '维' : '审'}}</view><view class="identity-info"><view class="identity-name">{{role.name}}</view><view class="muted">{{role.description}}</view><text class="identity-badge">演示身份</text></view><button class="switch-role" bindtap="switchRole">切换 ⇄</button></view>
+  <view class="stats-grid"><view><text class="stat-number">{{stats.knowledge}}</text><text class="stat-label">已发布知识</text></view><view><text class="stat-number">{{stats.questions}}</text><text class="stat-label">本机提问</text></view><view><text class="stat-number">{{stats.resolved}}</text><text class="stat-label">有帮助反馈</text></view></view>
+  <view class="section-head"><text class="section-title">演示工作台</text><text class="tag gray">仅本机数据</text></view>
+  <view class="menu card"><button class="menu-item" bindtap="openManage"><view><view>知识管理与审核</view><view class="muted">{{canManage ? '当前角色可进入工作台' : '切换维护或审核角色后进入'}}</view></view><text class="menu-right">{{stats.pending}} 待审 →</text></button><button class="menu-item" bindtap="about"><text>关于本次演示</text><text class="menu-right">↗</text></button><button class="menu-item danger" bindtap="reset"><text>恢复初始演示数据</text><text>↺</text></button></view>
+  <view class="section-head"><text class="section-title">最近操作</text><text class="muted">{{stats.unresolved}} 条待改进反馈</text></view>
+  <view class="card"><view wx:if="{{!recent.length}}" class="muted">还没有操作记录。试试发布一条知识。</view><view class="audit-row" wx:for="{{recent}}" wx:key="id"><view class="audit-title">{{item.action}}</view><view class="muted">{{item.title}}</view><view class="audit-time">{{item.actorName}} · {{item.displayTime}}</view></view></view>
+  <view class="note">角色切换用于展示业务分工；当前原型没有真实身份认证。历史对话最多保留 120 条消息。</view>
+</view>

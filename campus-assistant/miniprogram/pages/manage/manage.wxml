@@ -1,0 +1,31 @@
+<view class="page" wx:if="{{allowed}}">
+  <view class="eyebrow">KNOWLEDGE WORKSPACE</view><view class="page-title">让答案有据可依。</view><view class="subtitle">当前：{{role.name}} · 本地演示工作台</view>
+  <view class="workflow"><text class="{{role.id === 'maintainer' ? 'current' : ''}}">01 起草与提交</text><text>→</text><text class="{{role.id === 'reviewer' ? 'current' : ''}}">02 审核发布</text><text>→</text><text>03 用于问答</text></view>
+  <button wx:if="{{role.id === 'maintainer' && !editing}}" class="primary" bindtap="newDraft">＋ 新建演示知识</button>
+  <view class="note" wx:if="{{role.id === 'reviewer'}}">请核对待审内容。审核通过后立即发布；有问题可填写原因退回。可在“我的”切换维护角色演示新建或修改。</view>
+  <view class="card editor" wx:if="{{editing && role.id === 'maintainer'}}">
+    <view class="section-title">{{form.targetId ? '修订已发布知识' : '编辑知识草稿'}}</view><view class="muted">保存后，还需在草稿列表中提交审核。</view>
+    <text class="field-label">问题标题 *</text><input class="field" value="{{form.title}}" data-field="title" bindinput="updateField" placeholder="例如：食堂遗失物品怎么找回？" maxlength="80"/>
+    <text class="field-label">知识分类 *</text><picker range="{{categories}}" value="{{categoryIndex}}" bindchange="categoryChange"><view class="field picker-field">{{form.category}} <text>选择分类 ↓</text></view></picker>
+    <text class="field-label">同义问法（逗号分隔）</text><input class="field" value="{{form.aliases}}" data-field="aliases" bindinput="updateField" placeholder="食堂丢东西，食堂失物招领" maxlength="200"/>
+    <text class="field-label">回答内容 *</text><textarea class="field" value="{{form.answer}}" data-field="answer" bindinput="updateField" placeholder="填写可直接用于回答的内容" maxlength="1200"/>
+    <text class="field-label">办理步骤（每行一步）</text><textarea class="field" value="{{form.steps}}" data-field="steps" bindinput="updateField" placeholder="第一步…&#10;第二步…" maxlength="1000"/>
+    <text class="field-label">咨询途径 *</text><input class="field" value="{{form.channel}}" data-field="channel" bindinput="updateField" placeholder="例如：食堂服务台（演示）" maxlength="100"/>
+    <text class="field-label">资料来源 *</text><input class="field" value="{{form.source}}" data-field="source" bindinput="updateField" maxlength="100"/>
+    <text class="field-label">适用范围 *</text><input class="field" value="{{form.scope}}" data-field="scope" bindinput="updateField" maxlength="100"/>
+    <view class="actions"><button class="outline" bindtap="cancel">取消编辑</button><button class="primary" bindtap="save">保存草稿</button></view>
+  </view>
+  <view class="tabs"><button class="tab {{tab === 'pending' ? 'active' : ''}}" data-tab="pending" bindtap="changeTab">待审核</button><button class="tab {{tab === 'draft' ? 'active' : ''}}" data-tab="draft" bindtap="changeTab">草稿 / 退回</button><button class="tab {{tab === 'published' ? 'active' : ''}}" data-tab="published" bindtap="changeTab">知识库</button><button class="tab {{tab === 'history' ? 'active' : ''}}" data-tab="history" bindtap="changeTab">已审记录</button></view>
+  <view class="empty" wx:if="{{!items.length}}">这里暂时没有条目。</view>
+  <view class="card" wx:for="{{items}}" wx:key="id" wx:for-item="entry">
+    <view class="row"><text class="tag">{{entry.category}}</text><text class="tag {{entry.status === 'pending' ? 'amber' : 'gray'}}">{{entry.statusLabel}}</text></view>
+    <view class="card-title">{{entry.title}}</view><text class="body-text" selectable="{{true}}">{{entry.answer}}</text>
+    <view class="review-steps" wx:if="{{entry.steps.length}}"><view wx:for="{{entry.steps}}" wx:key="index" wx:for-item="step">{{index + 1}}. {{step}}</view></view>
+    <view class="review-meta"><view>来源：{{entry.source}}</view><view>范围：{{entry.scope}}</view><view>途径：{{entry.channel}}</view><view wx:if="{{entry.aliases.length}}">同义问法：{{entry.aliases}}</view><view>{{entry.authorName || '演示知识库'}} · {{entry.updatedAt}} <text wx:if="{{entry.version}}">· v{{entry.version}}</text></view></view>
+    <view class="reject-reason" wx:if="{{entry.reason}}">退回原因：{{entry.reason}}</view>
+    <view class="actions" wx:if="{{role.id === 'maintainer' && (entry.status === 'draft' || entry.status === 'rejected')}}"><button class="outline" data-id="{{entry.id}}" bindtap="edit">继续编辑</button><button class="primary" data-id="{{entry.id}}" bindtap="submit">提交审核</button></view>
+    <view class="actions" wx:if="{{role.id === 'maintainer' && tab === 'published'}}"><button class="secondary" data-id="{{entry.id}}" bindtap="edit">创建修订草稿</button></view>
+    <view class="actions" wx:if="{{role.id === 'reviewer' && entry.status === 'pending'}}"><button class="outline" data-id="{{entry.id}}" bindtap="reject">退回修改</button><button class="primary" data-id="{{entry.id}}" bindtap="approve">审核并发布</button></view>
+  </view>
+</view>
+<view class="page" wx:else><view class="empty">请切换知识维护人员或审核员后进入工作台。</view><button class="primary" bindtap="toMine">前往“我的”切换角色</button></view>

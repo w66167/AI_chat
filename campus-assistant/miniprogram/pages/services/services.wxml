@@ -1,0 +1,8 @@
+<view class="page">
+  <view class="eyebrow">CAMPUS SERVICES</view><view class="page-title">办事之前，先看指南。</view><view class="subtitle">流程、材料与咨询途径，都在这里。</view>
+  <view class="search-box"><text>⌕</text><input placeholder="搜索办事事项，如：续借" value="{{search}}" bindinput="searchChange" maxlength="60"/></view>
+  <view class="tabs"><button class="tab {{category === item ? 'active' : ''}}" wx:for="{{categories}}" wx:key="*this" data-category="{{item}}" bindtap="changeCategory">{{item}}</button></view>
+  <view class="result-head"><text>已发布指南</text><text>{{items.length}} 项</text></view>
+  <view wx:if="{{!items.length}}" class="empty">没有找到相关指南，试试其他关键词。</view>
+  <button class="card guide-card" wx:for="{{items}}" wx:key="id" data-id="{{item.id}}" bindtap="open"><view class="row"><text class="tag">{{item.category}}</text><text class="guide-arrow">↗</text></view><view class="card-title">{{item.title}}</view><view class="guide-preview">{{item.answer}}</view><view class="guide-meta">{{item.steps.length}} 个步骤 <text>·</text> v{{item.version}} <text>·</text> 演示资料</view></button>
+</view>

@@ -1,0 +1,22 @@
+<view class="page home-page">
+  <view class="brand-line"><text class="eyebrow">CAMPUS ASSISTANT</text><text class="online"><text class="dot"></text>本地演示</text></view>
+  <view class="hero">
+    <view class="hero-label">你的校园生活小助手</view>
+    <view class="hero-title">校园的事，<br/>在这里问。</view>
+    <view class="hero-desc">找流程、查指南，让每个答案都有出处。</view>
+    <view class="hero-ornament"><view class="orbit orbit-one"></view><view class="orbit orbit-two"></view><text class="hero-spark">✳</text></view>
+    <button class="hero-button" bindtap="ask"><text>开始咨询</text><text>↗</text></button>
+    <view class="hero-foot">{{count}} 条已发布知识 · 6 类校园服务</view>
+  </view>
+  <view class="section-head"><text class="section-title">常用服务</text><button class="section-link" bindtap="openServices">全部指南 →</button></view>
+  <view class="quick-grid">
+    <button class="quick-card" wx:for="{{quickLinks}}" wx:key="label" data-question="{{item.question}}" bindtap="ask">
+      <view class="service-mark {{item.color}}">{{item.mark}}</view><view class="quick-title">{{item.label}}</view><view class="muted">{{item.hint}}</view>
+    </button>
+  </view>
+  <view class="section-head"><text class="section-title">大家常问</text><text class="muted">从这里开始</text></view>
+  <view class="question-list">
+    <button class="question-row" wx:for="{{questions}}" wx:key="*this" data-question="{{item}}" bindtap="ask"><text class="question-index">0{{index + 1}}</text><text class="question-text">{{item}}</text><text class="question-arrow">↗</text></button>
+  </view>
+  <view class="demo-foot"><text class="foot-dot"></text>课题演示 · 使用样例资料，办理以本校公告为准</view>
+</view>

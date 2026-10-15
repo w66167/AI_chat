@@ -1,0 +1,11 @@
+<view class="page" wx:if="{{item}}">
+  <view class="row"><text class="tag">{{item.category}}</text><text class="muted">已发布 · v{{item.version}}</text></view>
+  <view class="page-title detail-title">{{item.title}}</view><view class="subtitle">{{item.scope}} · 更新于 {{item.updatedAt}}</view>
+  <view class="note demo-note">本页为课题演示资料，非学校正式办事依据。实际政策、时间与办理要求请核实本校公告。</view>
+  <view class="card"><view class="section-title">事项说明</view><text class="body-text detail-body" selectable="{{true}}">{{item.answer}}</text></view>
+  <view class="card" wx:if="{{item.steps.length}}"><view class="section-title">办理步骤</view><view class="detail-step" wx:for="{{item.steps}}" wx:key="index"><text class="detail-number">0{{index + 1}}</text><text>{{item}}</text></view></view>
+  <view class="card"><view class="section-title">咨询途径</view><view class="channel-title">{{item.channel}}</view><view class="muted">此处为演示窗口名称。本校真实联系电话、服务时间和官方链接尚未配置。</view></view>
+  <view class="source-info"><view>资料来源：{{item.source}}</view><view>知识编号：{{item.id}}</view><view>本页展示当前发布版本；历史对话保留回答时的版本。</view></view>
+  <button class="primary" bindtap="ask">围绕这件事问一问 ↗</button>
+</view>
+<view class="empty" wx:else>这条指南不存在或已重置，请返回重新选择。</view>

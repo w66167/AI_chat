@@ -1,0 +1,36 @@
+page { background: #f5f7fa; color: #233238; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28rpx; line-height: 1.65; }
+view, text, button, input, textarea, scroll-view { box-sizing: border-box; }
+button { margin: 0; padding: 0; font-size: 28rpx; line-height: 1.6; border-radius: 18rpx; background: transparent; color: inherit; }
+button::after { border: none; }
+button[disabled] { opacity: .5; }
+.page { padding: 32rpx 32rpx 56rpx; }
+.eyebrow { color: #71827e; font-size: 20rpx; font-weight: 700; letter-spacing: 4rpx; }
+.page-title { font-size: 46rpx; line-height: 1.35; font-weight: 700; letter-spacing: -1rpx; margin-top: 8rpx; }
+.subtitle { color: #7a8790; font-size: 25rpx; margin-top: 12rpx; }
+.section-head { display: flex; justify-content: space-between; align-items: center; margin: 38rpx 0 20rpx; }
+.section-title { font-size: 31rpx; font-weight: 650; }
+.section-link { font-size: 24rpx; color: #176b5b; padding: 8rpx; }
+.card { background: #fff; border: 1rpx solid #e8edef; border-radius: 26rpx; padding: 28rpx; margin-bottom: 20rpx; }
+.muted { color: #829097; font-size: 24rpx; }
+.tag { display: inline-block; background: #eaf4ef; color: #176b5b; border-radius: 9rpx; font-size: 20rpx; padding: 4rpx 13rpx; }
+.tag.amber { background: #fff2dc; color: #966321; }
+.tag.gray { background: #f0f3f5; color: #7c888e; }
+.primary { background: #176b5b; color: white; padding: 21rpx 28rpx; font-weight: 600; text-align: center; }
+.secondary { background: #edf4f1; color: #176b5b; padding: 20rpx 28rpx; text-align: center; }
+.outline { border: 1rpx solid #dfe6e7; padding: 19rpx 25rpx; background: #fff; text-align: center; }
+.danger { color: #b95e4c; }
+.note { padding: 22rpx 25rpx; background: #edf2f1; border-radius: 18rpx; color: #75837f; font-size: 23rpx; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 18rpx; }
+.actions { display: flex; gap: 16rpx; margin-top: 24rpx; flex-wrap: wrap; }
+.actions button { flex: 1; min-width: 140rpx; font-size: 25rpx; }
+.empty { text-align: center; color: #84918f; padding: 64rpx 20rpx; }
+.field-label { font-size: 25rpx; font-weight: 600; display: block; margin: 22rpx 0 10rpx; }
+.field { width: 100%; background: #f4f7f7; border: 1rpx solid #e6ebec; border-radius: 15rpx; padding: 20rpx; min-height: 80rpx; font-size: 26rpx; }
+input.field { height: 84rpx; }
+textarea.field { height: 180rpx; line-height: 1.65; }
+.tabs { display: flex; gap: 14rpx; flex-wrap: wrap; margin: 26rpx 0; }
+.tab { padding: 13rpx 25rpx; border-radius: 100rpx; font-size: 24rpx; color: #74838a; background: #fff; border: 1rpx solid #e8edef; }
+.tab.active { color: #fff; background: #176b5b; border-color: #176b5b; }
+.card-title { font-size: 29rpx; font-weight: 600; margin: 13rpx 0 8rpx; }
+.body-text { font-size: 27rpx; line-height: 1.85; white-space: pre-wrap; word-break: break-all; }
+.divider { height: 1rpx; background: #eef1f1; margin: 24rpx 0; }

@@ -1,0 +1,26 @@
+.home-page { padding-top: 24rpx; }
+.brand-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30rpx; }
+.online { color: #74857e; font-size: 21rpx; display: flex; align-items: center; gap: 9rpx; }
+.dot { width: 10rpx; height: 10rpx; border-radius: 50%; background: #6aa187; }
+.hero { background: #174c40; color: #fff; padding: 38rpx; border-radius: 32rpx; position: relative; overflow: hidden; }
+.hero-label { color: #b3d3bf; font-size: 23rpx; position: relative; z-index: 1; }
+.hero-title { font-size: 62rpx; font-weight: 650; line-height: 1.3; margin: 22rpx 0; position: relative; z-index: 1; letter-spacing: -2rpx; }
+.hero-desc { color: #b8cec6; font-size: 24rpx; position: relative; z-index: 1; }
+.hero-button { margin-top: 36rpx; background: #e7f1c2; color: #234b3b; padding: 21rpx 28rpx; display: flex; justify-content: space-between; font-weight: 650; position: relative; z-index: 1; }
+.hero-foot { color: #99b8aa; font-size: 20rpx; margin-top: 22rpx; }
+.hero-ornament { position: absolute; width: 280rpx; height: 280rpx; right: -30rpx; top: 20rpx; opacity: .45; }
+.orbit { border: 1rpx solid #67917b; border-radius: 50%; position: absolute; width: 260rpx; height: 260rpx; }
+.orbit-two { width: 200rpx; height: 200rpx; left: 30rpx; top: 30rpx; }
+.hero-spark { font-size: 160rpx; color: #b8d786; position: absolute; left: 54rpx; top: 4rpx; }
+.quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18rpx; }
+.quick-card { text-align: left; background: #fff; border: 1rpx solid #e8edef; padding: 25rpx; border-radius: 23rpx; }
+.service-mark { width: 62rpx; height: 62rpx; line-height: 62rpx; text-align: center; border-radius: 18rpx; font-size: 27rpx; font-weight: 650; margin-bottom: 16rpx; }
+.green { background: #e9f3eb; color: #4b8064; }.blue { background: #e9f0f9; color: #57789e; }.amber { background: #faf1e1; color: #ae8950; }.purple { background: #efeaf7; color: #8c73ac; }
+.quick-title { font-size: 28rpx; font-weight: 600; margin-bottom: 4rpx; }
+.quick-card .muted { font-size: 21rpx; }
+.question-list { background: #fff; border: 1rpx solid #e8edef; border-radius: 24rpx; padding: 0 25rpx; }
+.question-row { display: flex; gap: 20rpx; padding: 26rpx 0; text-align: left; align-items: center; border-bottom: 1rpx solid #eef1f1; border-radius: 0; }
+.question-row:last-child { border-bottom: 0; }
+.question-index { color: #9daaa3; font-size: 23rpx; }.question-text { flex: 1; font-size: 26rpx; }.question-arrow { color: #869a90; }
+.demo-foot { color: #92a099; font-size: 20rpx; display: flex; align-items: center; justify-content: center; gap: 10rpx; margin-top: 34rpx; }
+.foot-dot { width: 8rpx; height: 8rpx; background: #a7b6ae; border-radius: 50%; }
