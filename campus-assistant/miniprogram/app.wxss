@@ -1,102 +1,36 @@
-/* 设计基调：白底、单一主色、大留白、圆角卡片、无重阴影。
-   所有颜色集中在 page 的自定义属性里，换主题只改这一段。 */
-page {
-  --bg: #f7f8fa;
-  --card: #ffffff;
-  --primary: #2b6ef2;
-  --primary-soft: #eef4ff;
-  --primary-ink: #1d4ed8;
-  --text: #14171f;
-  --muted: #737b8c;
-  --line: #eef0f4;
-  --radius: 24rpx;
-  --amber: #b9772a;
-  --amber-soft: #fff6e8;
-  --danger: #c0503c;
-
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
-  font-size: 28rpx;
-  line-height: 1.65;
-}
-
+page { background: #f5f7fa; color: #233238; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28rpx; line-height: 1.65; }
 view, text, button, input, textarea, scroll-view { box-sizing: border-box; }
-
-button {
-  margin: 0; padding: 0; font-size: 28rpx; line-height: 1.6;
-  border-radius: 18rpx; background: transparent; color: inherit;
-}
+button { margin: 0; padding: 0; font-size: 28rpx; line-height: 1.6; border-radius: 18rpx; background: transparent; color: inherit; }
 button::after { border: none; }
-button[disabled] { opacity: .45; }
-
-/* ---------- 布局 ---------- */
-.page { padding: 28rpx 28rpx 64rpx; }
+button[disabled] { opacity: .5; }
+.page { padding: 32rpx 32rpx 56rpx; }
+.eyebrow { color: #71827e; font-size: 20rpx; font-weight: 700; letter-spacing: 4rpx; }
+.page-title { font-size: 46rpx; line-height: 1.35; font-weight: 700; letter-spacing: -1rpx; margin-top: 8rpx; }
+.subtitle { color: #7a8790; font-size: 25rpx; margin-top: 12rpx; }
+.section-head { display: flex; justify-content: space-between; align-items: center; margin: 38rpx 0 20rpx; }
+.section-title { font-size: 31rpx; font-weight: 650; }
+.section-link { font-size: 24rpx; color: #176b5b; padding: 8rpx; }
+.card { background: #fff; border: 1rpx solid #e8edef; border-radius: 26rpx; padding: 28rpx; margin-bottom: 20rpx; }
+.muted { color: #829097; font-size: 24rpx; }
+.tag { display: inline-block; background: #eaf4ef; color: #176b5b; border-radius: 9rpx; font-size: 20rpx; padding: 4rpx 13rpx; }
+.tag.amber { background: #fff2dc; color: #966321; }
+.tag.gray { background: #f0f3f5; color: #7c888e; }
+.primary { background: #176b5b; color: white; padding: 21rpx 28rpx; font-weight: 600; text-align: center; }
+.secondary { background: #edf4f1; color: #176b5b; padding: 20rpx 28rpx; text-align: center; }
+.outline { border: 1rpx solid #dfe6e7; padding: 19rpx 25rpx; background: #fff; text-align: center; }
+.danger { color: #b95e4c; }
+.note { padding: 22rpx 25rpx; background: #edf2f1; border-radius: 18rpx; color: #75837f; font-size: 23rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 18rpx; }
 .actions { display: flex; gap: 16rpx; margin-top: 24rpx; flex-wrap: wrap; }
 .actions button { flex: 1; min-width: 140rpx; font-size: 25rpx; }
-.divider { height: 1rpx; background: var(--line); margin: 24rpx 0; }
-
-/* ---------- 文字 ---------- */
-.eyebrow { color: var(--muted); font-size: 20rpx; font-weight: 700; letter-spacing: 4rpx; }
-.page-title { font-size: 46rpx; line-height: 1.3; font-weight: 700; letter-spacing: -1rpx; margin-top: 8rpx; }
-.section-title { font-size: 30rpx; font-weight: 650; }
-.section-head { display: flex; justify-content: space-between; align-items: center; margin: 40rpx 0 18rpx; }
-.section-link { font-size: 24rpx; color: var(--muted); padding: 8rpx; }
-.subtitle { color: var(--muted); font-size: 25rpx; margin-top: 10rpx; }
-.muted { color: var(--muted); font-size: 24rpx; }
-.card-title { font-size: 29rpx; font-weight: 600; margin: 10rpx 0 8rpx; }
-.body-text { font-size: 27rpx; line-height: 1.85; white-space: pre-wrap; word-break: break-word; }
-
-/* ---------- 容器 ---------- */
-.card {
-  background: var(--card); border: 1rpx solid var(--line);
-  border-radius: var(--radius); padding: 26rpx; margin-bottom: 20rpx;
-}
-.note {
-  padding: 20rpx 22rpx; background: #f1f3f7; border-radius: 18rpx;
-  color: var(--muted); font-size: 23rpx;
-}
-.empty { text-align: center; color: var(--muted); padding: 72rpx 20rpx; font-size: 26rpx; }
-
-/* ---------- 标签、胶囊 ---------- */
-.tag {
-  display: inline-block; background: var(--primary-soft); color: var(--primary-ink);
-  border-radius: 10rpx; font-size: 20rpx; padding: 4rpx 12rpx;
-}
-.tag.amber { background: var(--amber-soft); color: var(--amber); }
-.tag.gray { background: #f1f3f7; color: var(--muted); }
-.chip {
-  display: inline-flex; align-items: center; gap: 8rpx;
-  padding: 14rpx 24rpx; border-radius: 100rpx;
-  background: var(--card); border: 1rpx solid var(--line);
-  font-size: 25rpx; color: #2c3340; margin: 0 14rpx 14rpx 0;
-}
-.chip:active { background: var(--primary-soft); border-color: #d7e3ff; }
-
-/* ---------- 按钮 ---------- */
-.primary {
-  background: var(--primary); color: #fff; padding: 24rpx 28rpx;
-  font-weight: 600; text-align: center; border-radius: 20rpx;
-}
-.primary:active { background: var(--primary-ink); }
-.secondary { background: var(--primary-soft); color: var(--primary-ink); padding: 20rpx 28rpx; text-align: center; }
-.outline { border: 1rpx solid #e2e6ee; padding: 19rpx 25rpx; background: #fff; text-align: center; }
-.danger { color: var(--danger); }
-
-/* ---------- 表单 ---------- */
+.empty { text-align: center; color: #84918f; padding: 64rpx 20rpx; }
 .field-label { font-size: 25rpx; font-weight: 600; display: block; margin: 22rpx 0 10rpx; }
-.field {
-  width: 100%; background: #f6f7fa; border: 1rpx solid var(--line);
-  border-radius: 16rpx; padding: 20rpx; min-height: 80rpx; font-size: 26rpx;
-}
+.field { width: 100%; background: #f4f7f7; border: 1rpx solid #e6ebec; border-radius: 15rpx; padding: 20rpx; min-height: 80rpx; font-size: 26rpx; }
 input.field { height: 84rpx; }
 textarea.field { height: 180rpx; line-height: 1.65; }
-
-/* ---------- 分类标签 ---------- */
-.tabs { display: flex; gap: 14rpx; flex-wrap: wrap; margin: 24rpx 0; }
-.tab {
-  padding: 12rpx 24rpx; border-radius: 100rpx; font-size: 24rpx;
-  color: var(--muted); background: #fff; border: 1rpx solid var(--line);
-}
-.tab.active { color: #fff; background: var(--primary); border-color: var(--primary); }
+.tabs { display: flex; gap: 14rpx; flex-wrap: wrap; margin: 26rpx 0; }
+.tab { padding: 13rpx 25rpx; border-radius: 100rpx; font-size: 24rpx; color: #74838a; background: #fff; border: 1rpx solid #e8edef; }
+.tab.active { color: #fff; background: #176b5b; border-color: #176b5b; }
+.card-title { font-size: 29rpx; font-weight: 600; margin: 13rpx 0 8rpx; }
+.body-text { font-size: 27rpx; line-height: 1.85; white-space: pre-wrap; word-break: break-all; }
+.divider { height: 1rpx; background: #eef1f1; margin: 24rpx 0; }
