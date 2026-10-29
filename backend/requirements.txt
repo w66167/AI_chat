@@ -1,4 +1,8 @@
-﻿fastapi>=0.115
-uvicorn[standard]>=0.30
-pydantic>=2.7
-
+# 后端依赖
+#
+# 刻意只用标准库的 HTTP 服务（见 README「为什么不用 FastAPI」），
+# 因此不需要 fastapi / uvicorn。唯一的外部依赖是 pydantic（请求校验）。
+#
+# pydantic 1.x 和 2.x 都能跑：schemas.py 的字段约束写成两版兼容的形式。
+# Anaconda 环境通常自带 pydantic，可先 `python -c "import pydantic"` 确认。
+pydantic>=1.10
