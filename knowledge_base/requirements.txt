@@ -1,0 +1,16 @@
+# 知识库与检索层依赖
+#
+# 已验证组合（Windows 11 / Python 3.11.7 / torch 2.6.0+cu124）：
+#   transformers 4.56.2 + tokenizers 0.22.2 + huggingface-hub 0.34.0
+#
+# 注意：不要装 transformers 5.x。它要求 regex>=2025.10.22，且与 tokenizers 0.22 不兼容，
+# 会连锁触发版本冲突（本项目实测踩过）。4.56.x 是当前稳定组合。
+transformers==4.56.2
+tokenizers==0.22.2
+huggingface-hub==0.34.0
+safetensors>=0.4.3
+regex>=2024.11.6
+numpy>=1.24,<3
+
+# torch 不在这里声明：需要按显卡驱动选 CUDA 版本，请单独安装，例如
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
