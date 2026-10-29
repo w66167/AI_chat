@@ -17,7 +17,8 @@ Page({
     if (!this.data.canManage) return wx.showToast({ title: '请先切换维护或审核角色', icon: 'none' });
     wx.navigateTo({ url: '/pages/manage/manage' });
   },
-  about() { wx.showModal({ title: '关于本次演示', content: '校园知答 v0.1\n本地关键词检索原型，未接入大模型、学校认证或业务系统。资料、身份与窗口名称均用于演示。数据仅保存在当前开发者工具或设备中，不跨设备同步。', showCancel: false }); },
+  openServices() { wx.navigateTo({ url: '/pages/services/services' }); },
+  about() { wx.showModal({ title: '关于本次演示', content: '校园知答 v0.2\n问答由后端检索《杭州电子科技大学学生手册》（2017 年版，586 条知识）生成，回答附出处与页码；未接入大模型、学校认证或业务系统。个人事项查询请走学校官方渠道。服务不可用时自动回退到本机 20 条示例知识。', showCancel: false }); },
   reset() {
     wx.showModal({ title: '恢复演示初始状态？', content: '将删除本机对话、反馈、知识修改及操作记录，恢复 20 条样例知识和 1 条待审核知识。此操作无法撤销。', confirmText: '恢复初始', confirmColor: '#b95e4c', success: (res) => {
       if (res.confirm) {

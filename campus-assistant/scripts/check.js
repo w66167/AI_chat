@@ -27,16 +27,34 @@ function checkFiles(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const file = path.join(dir, entry.name);
     if (entry.isDirectory()) checkFiles(file);
-    else if (file.endsWith('.json')) JSON.parse(fs.readFileSync(file, 'utf8'));
-    else if (file.endsWith('.js')) {
-      const code = fs.readFileSync(file, 'utf8');
-      new vm.Script(code, { filename: file });
-      assert.ok(!/wx\.(request|connectSocket|uploadFile|downloadFile)\s*\(/.test(code), 'Local demo must not need network');
+    else if (/\.(json|js|wxml|wxss)$/.test(file)) {
+      const buf = fs.readFileSync(file);
+      // WXSS/WXML 编译器不认 UTF-8 BOM，会报 unexpected '\uFEFF' at pos 1。
+      // Windows 下用 PowerShell 的 Set-Content -Encoding utf8 写文件容易带上。
+      assert.ok(!(buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF),
+        '文件带 UTF-8 BOM（会导致编译失败）：' + path.relative(mini, file));
+      const code = buf.toString('utf8');
+      if (file.endsWith('.json')) JSON.parse(code);
+      else if (file.endsWith('.js')) {
+        new vm.Script(code, { filename: file });
+        // 联网只允许出现在 utils/api.js 一处；其他文件必须保持离线可运行。
+        const isApiLayer = file.endsWith(path.join('utils', 'api.js'));
+        if (!isApiLayer) {
+          assert.ok(!/wx\.(request|connectSocket|uploadFile|downloadFile)\s*\(/.test(code),
+            '除 utils/api.js 外不得直接联网：' + path.relative(mini, file));
+        }
+      }
     }
   }
 }
 checkFiles(mini);
-console.log('PASS 项目入口、六个页面文件、JSON 与 JavaScript 语法，无网络调用');
+
+// 在线通道必须带离线回退：chat.js 里出现 api.ask 就必须同时出现本地 qa.answer。
+const chatCode = fs.readFileSync(path.join(mini, 'pages', 'chat', 'chat.js'), 'utf8');
+if (/api\.ask\s*\(/.test(chatCode)) {
+  assert.ok(/qa\.answer\s*\(/.test(chatCode), '在线模式必须保留本地回退（qa.answer）');
+}
+console.log('PASS 项目入口、六个页面文件、JSON 与 JavaScript 语法；联网仅限 utils/api.js，且聊天页保留离线回退');
 
 store.init();
 assert.equal(store.getKnowledge().length, 20);

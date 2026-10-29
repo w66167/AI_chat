@@ -1,0 +1,10 @@
+# 检索层运行产物与本地环境：不进版本库
+.venv/
+.cache/
+__pycache__/
+*.pyc
+data/indexes/
+data/bench_results.json
+
+# 临时目录：日志、pip 缓存、基础库安装包（曾累计 53 MB）
+.tmp/

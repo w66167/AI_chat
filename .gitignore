@@ -1,0 +1,4 @@
+﻿# 运行产物
+__pycache__/
+*.pyc
+backend/data/feedback.jsonl

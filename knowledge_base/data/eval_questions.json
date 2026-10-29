@@ -1,0 +1,2754 @@
+{
+ "meta": {
+  "title": "校园智能客服与知识问答系统 · 评测问题集（第一批）",
+  "source_corpus": "《杭州电子科技大学学生手册》206 页 / 586 个切块",
+  "built_at": "2026-10-22",
+  "total": 150,
+  "distribution": {
+   "标准问": 45,
+   "同义问法": 42,
+   "多轮追问": 20,
+   "澄清": 12,
+   "无答案": 20,
+   "边界／越权": 8,
+   "冲突／时效": 3
+  },
+  "thresholds": {
+   "top3_hit_rate": ">= 0.90",
+   "noanswer_refusal_rate": ">= 0.95",
+   "clarify_precision": ">= 0.90",
+   "conflict_violation": "0 条与已发布知识冲突的结论"
+  },
+  "scoring": {
+   "answer": "Top-3 检索结果中含 gold 任一块，且回答含全部 must_include、不含 must_not",
+   "answer_with_caveat": "命中 gold 且明确提示版本/时效或口径以现行文件为准，不得断言旧条款仍然有效",
+   "clarify": "不直接给出具体条款结论，而是提出澄清问题或候选选项",
+   "refuse_noanswer": "明确说明无法确认并给出咨询途径，不得编造事实、数字、电话或结论",
+   "refuse_boundary": "说明不代为受理/办理/查询，给出官方途径，且不含 must_not 中的承诺性表述"
+  },
+  "status_note": "题目已按语料标注命中目标，仍须知识审核员抽检确认后再作为验收依据。"
+ },
+ "items": [
+  {
+   "id": "ev-001",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "新生不能按期到校报到应当怎么处理？",
+   "gold": [
+    "hb-123",
+    "hb-009"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "放弃入学资格"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "校规第三条与国家规定第八条同答此问，两条都算命中",
+   "gold_docs": [
+    "普通高等学校学生管理规定",
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-002",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "每学期开学时学生应当如何办理注册手续？",
+   "gold": [
+    "hb-127"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "学院"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "学籍规定第七条：到所在学院办理",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-003",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生请假一周以上由谁批准？",
+   "gold": [
+    "hb-134"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "学生处"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "请假审批权限分三档",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-004",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "哪些情形会被取消课程期末考核资格？",
+   "gold": [
+    "hb-137"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "三分之一"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "旷课或欠作业累计达1/3",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-005",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生因考试冲突不能参加考试可以申请缓考吗？",
+   "gold": [
+    "hb-139"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "缓考"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "缓考须在考核前办理",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-006",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "必修课程考核不及格可以补考几次？",
+   "gold": [
+    "hb-142"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "一次"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "补考一次，仍不及格重新学习",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-007",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "平均学分绩点是如何计算的？",
+   "gold": [
+    "hb-131"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "学分绩点"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "GPA 为按学分加权的平均值",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-008",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "申请课程免修需要什么条件？",
+   "gold": [
+    "hb-147"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "3.5"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "前两学期 GPA≥3.5",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-009",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生申请休学需要办理哪些手续？",
+   "gold": [
+    "hb-161"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "休学申请表"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "申请表+家长同意+学院签署+教务处批准",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-010",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "什么情况下学生会被给予退学警示？",
+   "gold": [
+    "hb-167"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "14学分"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "学分与平均值双条件或延长学年0学分",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-011",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学校可以对学生作出退学处理的情形有哪些？",
+   "gold": [
+    "hb-169",
+    "hb-031"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "退学处理"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "校规第四十九条与国家规定第三十条并列，两条都算命中",
+   "gold_docs": [
+    "普通高等学校学生管理规定",
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-012",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生取得结业证书需要达到什么条件？",
+   "gold": [
+    "hb-177",
+    "hb-034"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "结业证书"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "校规第五十七条与国家规定第三十三条并列，两条都算命中",
+   "gold_docs": [
+    "普通高等学校学生管理规定",
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-013",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生申请转专业（类）需要符合哪些条件？",
+   "gold": [
+    "hb-201"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "一年级"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "年级范围与专长、疾病、困难、入伍等",
+   "gold_docs": [
+    "杭州电子科技大学转专业（类）与大类分流实施办法"
+   ]
+  },
+  {
+   "id": "ev-014",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "转专业（类）的申请程序是怎样的？",
+   "gold": [
+    "hb-203"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "志愿"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "期末网上申请，最多2个志愿",
+   "gold_docs": [
+    "杭州电子科技大学转专业（类）与大类分流实施办法"
+   ]
+  },
+  {
+   "id": "ev-015",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生办理转出需要提交哪些材料？",
+   "gold": [
+    "hb-194"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "公示"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "转出程序与材料清单",
+   "gold_docs": [
+    "杭州电子科技大学本科学生转学实施细则（试行）"
+   ]
+  },
+  {
+   "id": "ev-016",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "授予学士学位需要满足什么条件？",
+   "gold": [
+    "hb-214"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "准予毕业"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "完成培养计划且无第二条情形",
+   "gold_docs": [
+    "杭州电子科技大学本科毕业生学士学位授予细则"
+   ]
+  },
+  {
+   "id": "ev-017",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "哪些情况不授予学士学位？",
+   "gold": [
+    "hb-215"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "留校察看"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "作弊受留校察看、GPA<2.0、学位委员会认定",
+   "gold_docs": [
+    "杭州电子科技大学本科毕业生学士学位授予细则"
+   ]
+  },
+  {
+   "id": "ev-018",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学校对学生的纪律处分有哪几种？",
+   "gold": [
+    "hb-227"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "开除学籍"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "警告到开除学籍五种",
+   "gold_docs": [
+    "杭州电子科技大学学生纪律处分实施细则"
+   ]
+  },
+  {
+   "id": "ev-019",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "考试违规和作弊分别会受到什么处分？",
+   "gold": [
+    "hb-248"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "严重警告"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "违规与作弊分档处理",
+   "gold_docs": [
+    "杭州电子科技大学学生纪律处分实施细则"
+   ]
+  },
+  {
+   "id": "ev-020",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生对处分决定不服应当在多长时间内提出申诉？",
+   "gold": [
+    "hb-271"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "10日内"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "收到决定书之日起10日内",
+   "gold_docs": [
+    "杭州电子科技大学学生校内申诉管理规定"
+   ]
+  },
+  {
+   "id": "ev-021",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生申诉处理委员会应当在多长时间内作出处理决定？",
+   "gold": [
+    "hb-279",
+    "hb-062"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "15日"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "校规第十六条与国家规定第六十一条同为15日，两条都算命中",
+   "gold_docs": [
+    "普通高等学校学生管理规定",
+    "杭州电子科技大学学生校内申诉管理规定"
+   ]
+  },
+  {
+   "id": "ev-022",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "本科生选课分几轮进行？",
+   "gold": [
+    "hb-318"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "二轮"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "第一轮专业优先，第二轮可跨专业",
+   "gold_docs": [
+    "杭州电子科技大学本科生选课管理办法"
+   ]
+  },
+  {
+   "id": "ev-023",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "辅修专业证书如何申请发放？",
+   "gold": [
+    "hb-327"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "主修专业毕业资格"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "取得主修毕业资格后申请",
+   "gold_docs": [
+    "杭州电子科技大学本科生修读辅修专业、第二本科专业、第二学士学位的管理办法"
+   ]
+  },
+  {
+   "id": "ev-024",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "创新与拓展学分在成绩系统中如何记载？",
+   "gold": [
+    "hb-359"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "2"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "课程名“创新学分”，2学分，必修",
+   "gold_docs": [
+    "杭州电子科技大学创新与拓展学分认定管理办法"
+   ]
+  },
+  {
+   "id": "ev-025",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "优秀学生奖学金什么时候评定？",
+   "gold": [
+    "hb-404"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "每学期评定一次"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "开学时评定上一学期",
+   "gold_docs": [
+    "杭州电子科技大学本科生奖学金评审办法"
+   ]
+  },
+  {
+   "id": "ev-026",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "申请国家奖学金需要符合哪些条件？",
+   "gold": [
+    "hb-430"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "国家奖学金"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "国奖条件见第八条",
+   "gold_docs": [
+    "杭州电子科技大学国家奖学金、省政府奖学金、国家励志奖学金和国家助学金评比办法"
+   ]
+  },
+  {
+   "id": "ev-027",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "申请国家助学金的基本条件是什么？",
+   "gold": [
+    "hb-437"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "家庭经济困难"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "五项基本条件",
+   "gold_docs": [
+    "杭州电子科技大学国家奖学金、省政府奖学金、国家励志奖学金和国家助学金评比办法"
+   ]
+  },
+  {
+   "id": "ev-028",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "家庭经济困难学生是如何界定的？",
+   "gold": [
+    "hb-457"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "筹集"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "本人及家庭所能筹集资金不足以完成学业",
+   "gold_docs": [
+    "杭州电子科技大学家庭经济困难学生认定办法"
+   ]
+  },
+  {
+   "id": "ev-029",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "校内勤工助学的报酬标准和工作时间是怎样规定的？",
+   "gold": [
+    "hb-479"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "15元"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "15元/小时，每周8小时",
+   "gold_docs": [
+    "杭州电子科技大学学生校内勤工助学管理办法"
+   ]
+  },
+  {
+   "id": "ev-030",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生公寓的熄灯和开关门时间是怎么规定的？",
+   "gold": [
+    "hb-510"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "22:50"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "分周日—周四与周五周六",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ]
+  },
+  {
+   "id": "ev-031",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "寝室禁止使用哪些电器？",
+   "gold": [
+    "hb-529"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "热得快"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "违规电器清单",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ]
+  },
+  {
+   "id": "ev-032",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "大学生医保的参保方式有哪些？",
+   "gold": [
+    "hb-541"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "批量参保"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "新生批量、老生续保、零星参保",
+   "gold_docs": [
+    "杭州电子科技大学学生医疗相关规定"
+   ]
+  },
+  {
+   "id": "ev-033",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "大学生医保每人每年缴费标准是多少？",
+   "gold": [
+    "hb-543"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "240"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "缴费标准条",
+   "gold_docs": [
+    "杭州电子科技大学学生医疗相关规定"
+   ]
+  },
+  {
+   "id": "ev-034",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "新成立学生社团需要多少名发起人？",
+   "gold": [
+    "hb-559"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "3名以上"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "至少3名以上学生发起",
+   "gold_docs": [
+    "杭州电子科技大学学生社团管理条例（试行）"
+   ]
+  },
+  {
+   "id": "ev-035",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "社团出现哪些情形应当提出注销申请？",
+   "gold": [
+    "hb-567"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "3个月"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "六种情形",
+   "gold_docs": [
+    "杭州电子科技大学学生社团管理条例（试行）"
+   ]
+  },
+  {
+   "id": "ev-036",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "哪些情形造成的学生伤害事故学校应当承担相应责任？",
+   "gold": [
+    "hb-088"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "学校"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "第九条列举学校担责情形",
+   "gold_docs": [
+    "学生伤害事故处理办法"
+   ]
+  },
+  {
+   "id": "ev-037",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "哪些情形下学生伤害事故学校不承担责任？",
+   "gold": [
+    "hb-091"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "无法律责任"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "第十二条免责情形：学校已履职且行为无不当",
+   "gold_docs": [
+    "学生伤害事故处理办法"
+   ]
+  },
+  {
+   "id": "ev-038",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生在校园内不得有哪些行为？",
+   "gold": [
+    "hb-043"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "赌博"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "第四十二条禁止行为清单",
+   "gold_docs": [
+    "普通高等学校学生管理规定"
+   ]
+  },
+  {
+   "id": "ev-039",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "哪些情形学校可以给予开除学籍处分？",
+   "gold": [
+    "hb-053"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "开除学籍"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "第五十二条七种情形",
+   "gold_docs": [
+    "普通高等学校学生管理规定"
+   ]
+  },
+  {
+   "id": "ev-040",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学校给予学生的处分期限一般是多少？",
+   "gold": [
+    "hb-058"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "6到12"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "一般6到12个月",
+   "gold_docs": [
+    "普通高等学校学生管理规定"
+   ]
+  },
+  {
+   "id": "ev-041",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "考生应当提前多长时间进入考场？",
+   "gold": [
+    "hb-296"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "五分钟"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "提前五分钟",
+   "gold_docs": [
+    "考场规则"
+   ]
+  },
+  {
+   "id": "ev-042",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生选课的基本要求是什么？",
+   "gold": [
+    "hb-316"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "培养计划"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "以培养计划为依据选课",
+   "gold_docs": [
+    "杭州电子科技大学本科生选课管理办法"
+   ]
+  },
+  {
+   "id": "ev-043",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "学生上课应当遵守哪些课堂秩序？",
+   "gold": [
+    "hb-375"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "迟到"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "按时上下课、不得迟到早退",
+   "gold_docs": [
+    "课堂管理规则"
+   ]
+  },
+  {
+   "id": "ev-044",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "火车票优惠卡一学年可以使用几次？",
+   "gold": [
+    "hb-390"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "四次"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "寒假两次、暑假两次",
+   "gold_docs": [
+    "杭州电子科技大学学生证、校徽和火车票优惠卡管理办法"
+   ]
+  },
+  {
+   "id": "ev-045",
+   "type": "standard",
+   "type_label": "标准问",
+   "question": "课程成绩是如何评定和记载的？",
+   "gold": [
+    "hb-186"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "平时成绩"
+   ],
+   "must_not": [],
+   "difficulty": 1,
+   "note": "成绩管理规定一：评定与记载",
+   "gold_docs": [
+    "杭州电子科技大学本科学生成绩管理规定"
+   ]
+  },
+  {
+   "id": "ev-046",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "录取通知书收到了但家里有事去不了报到，会怎样？",
+   "gold": [
+    "hb-123"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "放弃入学资格"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "口语化改写，考查语义检索",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-047",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "开学忘了注册会有什么后果？",
+   "gold": [
+    "hb-127"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "自动退学"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "考查“逾期未注册”与“自动退学”关联",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-048",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "病假要开什么证明？能请多久？",
+   "gold": [
+    "hb-134"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "诊断证明"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "病假材料与请假上限",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-049",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "补考过了为什么成绩单上只写60？",
+   "gold": [
+    "hb-141"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "60分"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "补考成绩记载规则",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-050",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "两门考试撞了怎么办？",
+   "gold": [
+    "hb-139"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "缓考"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "“考试冲突”同义表达",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-051",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "挂科了还能补考吗？补考再挂怎么办？",
+   "gold": [
+    "hb-142"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "重新学习"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "补考与重新学习",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-052",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "绩点怎么算的？",
+   "gold": [
+    "hb-131"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "学分绩点"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "“绩点”指向 GPA 条",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-053",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "成绩好能不能不去上课直接考试？",
+   "gold": [
+    "hb-147"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "免听"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "免修免听的通俗问法",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-054",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "想休学一年要怎么办手续？",
+   "gold": [
+    "hb-161"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "休学申请表"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "休学手续",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-055",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "休学期满了怎么回来上学？",
+   "gold": [
+    "hb-166"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "复学"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "复学手续",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-056",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "被退学一般是因为什么？",
+   "gold": [
+    "hb-169"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "退学处理"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "退学情形",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-057",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "学分差一点能先拿结业证吗？",
+   "gold": [
+    "hb-177"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "结业证书"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "结业条件",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-058",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "转专业怎么报名？可以报几个？",
+   "gold": [
+    "hb-203"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "志愿"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "转专业报名与志愿数",
+   "gold_docs": [
+    "杭州电子科技大学转专业（类）与大类分流实施办法"
+   ]
+  },
+  {
+   "id": "ev-059",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "哪些人不能转专业？",
+   "gold": [
+    "hb-202"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "不允许转专业"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "第四条负面清单",
+   "gold_docs": [
+    "杭州电子科技大学转专业（类）与大类分流实施办法"
+   ]
+  },
+  {
+   "id": "ev-060",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "考试作弊被抓还能拿学位证吗？",
+   "gold": [
+    "hb-215"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "留校察看"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "作弊处分与学位挂钩",
+   "gold_docs": [
+    "杭州电子科技大学本科毕业生学士学位授予细则"
+   ]
+  },
+  {
+   "id": "ev-061",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "没拿到学位还有补救办法吗？",
+   "gold": [
+    "hb-216"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "申请"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "第三条补救途径",
+   "gold_docs": [
+    "杭州电子科技大学本科毕业生学士学位授予细则"
+   ]
+  },
+  {
+   "id": "ev-062",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "处分一共有几档？",
+   "gold": [
+    "hb-227"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "记过"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "处分种类",
+   "gold_docs": [
+    "杭州电子科技大学学生纪律处分实施细则"
+   ]
+  },
+  {
+   "id": "ev-063",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "警告处分要背多久？",
+   "gold": [
+    "hb-232"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "6-12个月"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "处分期限",
+   "gold_docs": [
+    "杭州电子科技大学学生纪律处分实施细则"
+   ]
+  },
+  {
+   "id": "ev-064",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "背了处分还能评奖学金吗？",
+   "gold": [
+    "hb-233"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "奖学金"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "处分未解除的限制",
+   "gold_docs": [
+    "杭州电子科技大学学生纪律处分实施细则"
+   ]
+  },
+  {
+   "id": "ev-065",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "处分下来不服怎么办？",
+   "gold": [
+    "hb-256"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "申诉"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "处分异议渠道",
+   "gold_docs": [
+    "杭州电子科技大学学生纪律处分实施细则"
+   ]
+  },
+  {
+   "id": "ev-066",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "收到处分决定书多久内要申诉？",
+   "gold": [
+    "hb-271"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "10日"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "申诉期限",
+   "gold_docs": [
+    "杭州电子科技大学学生校内申诉管理规定"
+   ]
+  },
+  {
+   "id": "ev-067",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "申诉材料不齐会怎样？",
+   "gold": [
+    "hb-273"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "补正"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "材料补正与视为撤回",
+   "gold_docs": [
+    "杭州电子科技大学学生校内申诉管理规定"
+   ]
+  },
+  {
+   "id": "ev-068",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "学校申诉结果不满意还能往上告吗？",
+   "gold": [
+    "hb-281"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "浙江省教育厅"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "向省级教育行政部门申诉",
+   "gold_docs": [
+    "杭州电子科技大学学生校内申诉管理规定"
+   ]
+  },
+  {
+   "id": "ev-069",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "选课第一轮和第二轮有什么区别？",
+   "gold": [
+    "hb-318"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "跨专业"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "两轮选课范围差异",
+   "gold_docs": [
+    "杭州电子科技大学本科生选课管理办法"
+   ]
+  },
+  {
+   "id": "ev-070",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "辅修不想读了能退吗？",
+   "gold": [
+    "hb-325"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "退读"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "申请修读及退读程序",
+   "gold_docs": [
+    "杭州电子科技大学本科生修读辅修专业、第二本科专业、第二学士学位的管理办法"
+   ]
+  },
+  {
+   "id": "ev-071",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "创新学分什么时候可以申报？",
+   "gold": [
+    "hb-355"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "第二学期"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "每学年第二学期初受理",
+   "gold_docs": [
+    "杭州电子科技大学创新与拓展学分认定管理办法"
+   ]
+  },
+  {
+   "id": "ev-072",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "毕业生还能补报创新学分吗？",
+   "gold": [
+    "hb-356"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "5月8日"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "毕业班单独受理时间",
+   "gold_docs": [
+    "杭州电子科技大学创新与拓展学分认定管理办法"
+   ]
+  },
+  {
+   "id": "ev-073",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "创新学分材料造假会怎么处理？",
+   "gold": [
+    "hb-357"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "考试舞弊"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "弄虚作假按考试舞弊论处",
+   "gold_docs": [
+    "杭州电子科技大学创新与拓展学分认定管理办法"
+   ]
+  },
+  {
+   "id": "ev-074",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "奖学金一学期评几次？",
+   "gold": [
+    "hb-404"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "每学期"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "优秀学生奖学金评定频次",
+   "gold_docs": [
+    "杭州电子科技大学本科生奖学金评审办法"
+   ]
+  },
+  {
+   "id": "ev-075",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "哪些学生可以参评奖学金？",
+   "gold": [
+    "hb-401"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "全日制"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "评奖对象",
+   "gold_docs": [
+    "杭州电子科技大学本科生奖学金评审办法"
+   ]
+  },
+  {
+   "id": "ev-076",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "国奖名单会公示吗？公示几天？",
+   "gold": [
+    "hb-444"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "5个工作日"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "校内公示不少于5个工作日",
+   "gold_docs": [
+    "杭州电子科技大学国家奖学金、省政府奖学金、国家励志奖学金和国家助学金评比办法"
+   ]
+  },
+  {
+   "id": "ev-077",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "什么样的家庭情况算困难生？",
+   "gold": [
+    "hb-464"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "低保"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "第九条认定情形",
+   "gold_docs": [
+    "杭州电子科技大学家庭经济困难学生认定办法"
+   ]
+  },
+  {
+   "id": "ev-078",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "困难生认定多久做一次？",
+   "gold": [
+    "hb-467"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "每学年"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "每学年集中认定一次",
+   "gold_docs": [
+    "杭州电子科技大学家庭经济困难学生认定办法"
+   ]
+  },
+  {
+   "id": "ev-079",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "勤工助学岗位怎么申请？",
+   "gold": [
+    "hb-482"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "申请表"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "申请与录用程序",
+   "gold_docs": [
+    "杭州电子科技大学学生校内勤工助学管理办法"
+   ]
+  },
+  {
+   "id": "ev-080",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "勤工助学的钱怎么发？",
+   "gold": [
+    "hb-483"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "发放"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "经费管理与报酬发放",
+   "gold_docs": [
+    "杭州电子科技大学学生校内勤工助学管理办法"
+   ]
+  },
+  {
+   "id": "ev-081",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "新生到校后住宿手续怎么办？",
+   "gold": [
+    "hb-494"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "住宿手续"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "按报到流程办理住宿",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ]
+  },
+  {
+   "id": "ev-082",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "可以自己在校外租房住吗？",
+   "gold": [
+    "hb-500"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "校外住宿"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "集中住宿制与例外",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ]
+  },
+  {
+   "id": "ev-083",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "寒暑假宿舍能住吗？",
+   "gold": [
+    "hb-506"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "封楼"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "寒暑假封楼管理",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ]
+  },
+  {
+   "id": "ev-084",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "宿舍能养猫吗？",
+   "gold": [
+    "hb-518"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "宠物"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "禁养宠物",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ]
+  },
+  {
+   "id": "ev-085",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "同学能在我寝室借住一晚吗？",
+   "gold": [
+    "hb-524"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "留宿"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "来客登记与禁止留宿",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ]
+  },
+  {
+   "id": "ev-086",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "医保看病怎么报销？",
+   "gold": [
+    "hb-545"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "结算"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "就医及费用结算",
+   "gold_docs": [
+    "杭州电子科技大学学生医疗相关规定"
+   ]
+  },
+  {
+   "id": "ev-087",
+   "type": "synonym",
+   "type_label": "同义问法",
+   "question": "社团星级评定有什么用？",
+   "gold": [
+    "hb-584"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "星级"
+   ],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "星级评定与资源分配",
+   "gold_docs": [
+    "杭州电子科技大学学生社团管理条例（试行）"
+   ]
+  },
+  {
+   "id": "ev-088",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "周末也这样吗？",
+   "gold": [
+    "hb-510"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "24:00"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接作息问题，追问周末差异",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ],
+   "ctx": {
+    "prev_question": "学生公寓的熄灯和开关门时间是怎么规定的？",
+    "prev_gold": "hb-510"
+   }
+  },
+  {
+   "id": "ev-089",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "那请两周的话找谁批？",
+   "gold": [
+    "hb-134"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "学生处"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接请假审批权限",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ],
+   "ctx": {
+    "prev_question": "学生请假一周以上由谁批准？",
+    "prev_gold": "hb-134"
+   }
+  },
+  {
+   "id": "ev-090",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "缓考没过怎么办？",
+   "gold": [
+    "hb-139"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "重新选课"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接缓考规则",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ],
+   "ctx": {
+    "prev_question": "考试冲突能申请缓考吗？",
+    "prev_gold": "hb-139"
+   }
+  },
+  {
+   "id": "ev-091",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "补考及格了成绩怎么记？",
+   "gold": [
+    "hb-141"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "60分"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "跨条承接：补考→成绩记载",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ],
+   "ctx": {
+    "prev_question": "必修课程考核不及格可以补考几次？",
+    "prev_gold": "hb-142"
+   }
+  },
+  {
+   "id": "ev-092",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "那最多能填几个志愿？",
+   "gold": [
+    "hb-203"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "2个志愿"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接转专业条件，追问志愿数",
+   "gold_docs": [
+    "杭州电子科技大学转专业（类）与大类分流实施办法"
+   ],
+   "ctx": {
+    "prev_question": "学生申请转专业（类）需要符合哪些条件？",
+    "prev_gold": "hb-201"
+   }
+  },
+  {
+   "id": "ev-093",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "绩点低于2.0会怎样？",
+   "gold": [
+    "hb-215"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "2.0"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "跨条承接：GPA→学位",
+   "gold_docs": [
+    "杭州电子科技大学本科毕业生学士学位授予细则"
+   ],
+   "ctx": {
+    "prev_question": "平均学分绩点是如何计算的？",
+    "prev_gold": "hb-131"
+   }
+  },
+  {
+   "id": "ev-094",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "留校察看要多久才能解除？",
+   "gold": [
+    "hb-257"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "解除处分"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接处分种类，追问解除",
+   "gold_docs": [
+    "杭州电子科技大学学生纪律处分实施细则"
+   ],
+   "ctx": {
+    "prev_question": "学校对学生的纪律处分有哪几种？",
+    "prev_gold": "hb-227"
+   }
+  },
+  {
+   "id": "ev-095",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "提交申诉以后多久有结果？",
+   "gold": [
+    "hb-279"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "15日"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接申诉期限，追问处理时限",
+   "gold_docs": [
+    "杭州电子科技大学学生校内申诉管理规定"
+   ],
+   "ctx": {
+    "prev_question": "收到处分决定书多久内要申诉？",
+    "prev_gold": "hb-271"
+   }
+  },
+  {
+   "id": "ev-096",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "选课人数太少会停开吗？",
+   "gold": [
+    "hb-318"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "10人"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "同块追问：停开条件",
+   "gold_docs": [
+    "杭州电子科技大学本科生选课管理办法"
+   ],
+   "ctx": {
+    "prev_question": "本科生选课分几轮进行？",
+    "prev_gold": "hb-318"
+   }
+  },
+  {
+   "id": "ev-097",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "辅修修完之后证书怎么拿？",
+   "gold": [
+    "hb-327"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "证书"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接辅修修读，追问发证",
+   "gold_docs": [
+    "杭州电子科技大学本科生修读辅修专业、第二本科专业、第二学士学位的管理办法"
+   ],
+   "ctx": {
+    "prev_question": "辅修专业怎么申请修读？",
+    "prev_gold": "hb-322"
+   }
+  },
+  {
+   "id": "ev-098",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "超过2个学分的部分怎么算？",
+   "gold": [
+    "hb-360"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "超过2个学分"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接创新学分记载，追问超分",
+   "gold_docs": [
+    "杭州电子科技大学创新与拓展学分认定管理办法"
+   ],
+   "ctx": {
+    "prev_question": "创新与拓展学分在成绩系统中如何记载？",
+    "prev_gold": "hb-359"
+   }
+  },
+  {
+   "id": "ev-099",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "证历本丢了怎么补？",
+   "gold": [
+    "hb-544"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "补办"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接参保，追问凭证补办",
+   "gold_docs": [
+    "杭州电子科技大学学生医疗相关规定"
+   ],
+   "ctx": {
+    "prev_question": "大学生医保的参保方式有哪些？",
+    "prev_gold": "hb-541"
+   }
+  },
+  {
+   "id": "ev-100",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "批复后多久要开会员大会？",
+   "gold": [
+    "hb-562"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "10个工作日"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接社团成立，追问时限",
+   "gold_docs": [
+    "杭州电子科技大学学生社团管理条例（试行）"
+   ],
+   "ctx": {
+    "prev_question": "新成立学生社团需要多少名发起人？",
+    "prev_gold": "hb-559"
+   }
+  },
+  {
+   "id": "ev-101",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "晚归了怎么办？",
+   "gold": [
+    "hb-525"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "登记"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "承接作息，追问晚归处理",
+   "gold_docs": [
+    "杭州电子科技大学学生住宿管理规定"
+   ],
+   "ctx": {
+    "prev_question": "学生公寓的熄灯和开关门时间是怎么规定的？",
+    "prev_gold": "hb-510"
+   }
+  },
+  {
+   "id": "ev-102",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "累计两次警示会怎样？",
+   "gold": [
+    "hb-169"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "退学"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "跨条承接：警示→退学",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ],
+   "ctx": {
+    "prev_question": "什么情况下学生会被给予退学警示？",
+    "prev_gold": "hb-167"
+   }
+  },
+  {
+   "id": "ev-103",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "结业后还能换毕业证吗？",
+   "gold": [
+    "hb-177"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "三年"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "同块追问：换发毕业证",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ],
+   "ctx": {
+    "prev_question": "学分差一点能先拿结业证吗？",
+    "prev_gold": "hb-177"
+   }
+  },
+  {
+   "id": "ev-104",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "体育课能免修吗？",
+   "gold": [
+    "hb-147"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "体育课"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "同块追问：免修例外",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ],
+   "ctx": {
+    "prev_question": "申请课程免修需要什么条件？",
+    "prev_gold": "hb-147"
+   }
+  },
+  {
+   "id": "ev-105",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "考试中途能出去一下吗？",
+   "gold": [
+    "hb-301"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "不得"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "跨块承接：考场规则",
+   "gold_docs": [
+    "考场规则"
+   ],
+   "ctx": {
+    "prev_question": "考生应当提前多长时间进入考场？",
+    "prev_gold": "hb-296"
+   }
+  },
+  {
+   "id": "ev-106",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "不是困难生能参加勤工助学吗？",
+   "gold": [
+    "hb-479"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "10元"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "同块追问：非困难生岗位",
+   "gold_docs": [
+    "杭州电子科技大学学生校内勤工助学管理办法"
+   ],
+   "ctx": {
+    "prev_question": "校内勤工助学的报酬标准是怎么规定的？",
+    "prev_gold": "hb-479"
+   }
+  },
+  {
+   "id": "ev-107",
+   "type": "multiturn",
+   "type_label": "多轮追问",
+   "question": "我是突发困难，能补认定吗？",
+   "gold": [
+    "hb-467"
+   ],
+   "expect": "answer",
+   "must_include": [
+    "突发"
+   ],
+   "must_not": [],
+   "difficulty": 3,
+   "note": "同块追问：突发情况调整",
+   "gold_docs": [
+    "杭州电子科技大学家庭经济困难学生认定办法"
+   ],
+   "ctx": {
+    "prev_question": "困难生认定多久做一次？",
+    "prev_gold": "hb-467"
+   }
+  },
+  {
+   "id": "ev-108",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "怎么办？",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "无有效信息，应反问澄清而不是猜一个条目"
+  },
+  {
+   "id": "ev-109",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "宿舍",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "只有一个话题词，应让用户选择具体事项"
+  },
+  {
+   "id": "ev-110",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "奖学金",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "优秀学生/单项/国奖/励志/助学金口径不同，需澄清"
+  },
+  {
+   "id": "ev-111",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "医保",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "参保/缴费/报销/凭证四类问题，需澄清"
+  },
+  {
+   "id": "ev-112",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "成绩",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "评定/记载/补考/GPA 口径不同，需澄清"
+  },
+  {
+   "id": "ev-113",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "转专业",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "条件与程序是不同条文，需澄清"
+  },
+  {
+   "id": "ev-114",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "处分",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "种类/期限/解除/申诉口径不同，需澄清"
+  },
+  {
+   "id": "ev-115",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "毕业",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "毕业/结业/肄业/学位口径不同，需澄清"
+  },
+  {
+   "id": "ev-116",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "学分",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "学分制/绩点/创新学分口径不同，需澄清"
+  },
+  {
+   "id": "ev-117",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "申诉",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "期限/材料/听证/省级申诉口径不同，需澄清"
+  },
+  {
+   "id": "ev-118",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "休学",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "申请/期限/待遇/复学口径不同，需澄清"
+  },
+  {
+   "id": "ev-119",
+   "type": "clarify",
+   "type_label": "澄清",
+   "question": "选课",
+   "gold": [],
+   "expect": "clarify",
+   "must_include": [],
+   "must_not": [],
+   "difficulty": 2,
+   "note": "流程/轮次/退补选/停开口径不同，需澄清"
+  },
+  {
+   "id": "ev-120",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "图书馆几点开门？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "图书馆"
+   ],
+   "difficulty": 1,
+   "note": "手册不含图书馆管理文件，知识库无依据"
+  },
+  {
+   "id": "ev-121",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "校园卡丢了怎么挂失？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "挂失"
+   ],
+   "difficulty": 1,
+   "note": "手册不含校园卡管理文件"
+  },
+  {
+   "id": "ev-122",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "校园网密码忘了怎么办？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "重置"
+   ],
+   "difficulty": 1,
+   "note": "手册不含信息化服务文件"
+  },
+  {
+   "id": "ev-123",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "宿舍网络坏了打哪个电话报修？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "报修电话"
+   ],
+   "difficulty": 1,
+   "note": "手册有公寓24小时值班制度但无具体号码"
+  },
+  {
+   "id": "ev-124",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "食堂几点开饭？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "营业"
+   ],
+   "difficulty": 1,
+   "note": "手册不含后勤餐饮文件"
+  },
+  {
+   "id": "ev-125",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "校车时刻表在哪看？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "班车"
+   ],
+   "difficulty": 1,
+   "note": "手册不含班车信息"
+  },
+  {
+   "id": "ev-126",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "快递点在哪里？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "快递"
+   ],
+   "difficulty": 1,
+   "note": "手册不含快递点信息"
+  },
+  {
+   "id": "ev-127",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "心理咨询怎么预约？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "预约"
+   ],
+   "difficulty": 1,
+   "note": "手册仅在课外教育项目提到心理健康教育，无预约渠道"
+  },
+  {
+   "id": "ev-128",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "校医院门诊时间是几点？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "门诊时间"
+   ],
+   "difficulty": 1,
+   "note": "手册只有医保政策，无门诊时间"
+  },
+  {
+   "id": "ev-129",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "身份证丢了怎么补办？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "补办身份证"
+   ],
+   "difficulty": 1,
+   "note": "属公安业务，手册不涉及"
+  },
+  {
+   "id": "ev-130",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "我们专业一年学费多少钱？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "学费标准"
+   ],
+   "difficulty": 1,
+   "note": "手册只规定缴纳义务，无各专业学费标准"
+  },
+  {
+   "id": "ev-131",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "教材在哪里买？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "教材"
+   ],
+   "difficulty": 1,
+   "note": "手册不含教材供应信息"
+  },
+  {
+   "id": "ev-132",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "四六级什么时候报名？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "四六级"
+   ],
+   "difficulty": 1,
+   "note": "手册不含考试报名安排"
+  },
+  {
+   "id": "ev-133",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "考研有什么政策？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "考研"
+   ],
+   "difficulty": 1,
+   "note": "手册不含研究生招生政策"
+  },
+  {
+   "id": "ev-134",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "普通话测试怎么报名？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "普通话"
+   ],
+   "difficulty": 1,
+   "note": "手册不含普通话测试安排"
+  },
+  {
+   "id": "ev-135",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "宿舍空调坏了找谁修？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "空调"
+   ],
+   "difficulty": 1,
+   "note": "手册有设施维护条款但无报修渠道"
+  },
+  {
+   "id": "ev-136",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "毕业照什么时候拍？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "毕业照"
+   ],
+   "difficulty": 1,
+   "note": "手册无毕业照安排"
+  },
+  {
+   "id": "ev-137",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "怎么查老师的办公时间？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "办公时间"
+   ],
+   "difficulty": 1,
+   "note": "手册无教师办公时间信息"
+  },
+  {
+   "id": "ev-138",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "学校有哪些交换生项目？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "交换"
+   ],
+   "difficulty": 1,
+   "note": "手册只提到跨校联合培养保留学籍，无项目清单"
+  },
+  {
+   "id": "ev-139",
+   "type": "noanswer",
+   "type_label": "无答案",
+   "question": "校园卡余额怎么查？",
+   "gold": [],
+   "expect": "refuse_noanswer",
+   "must_include": [],
+   "must_not": [
+    "余额"
+   ],
+   "difficulty": 1,
+   "note": "手册不含校园卡业务"
+  },
+  {
+   "id": "ev-140",
+   "type": "boundary",
+   "type_label": "边界／越权",
+   "question": "帮我报修一下宿舍漏水。",
+   "gold": [],
+   "expect": "refuse_boundary",
+   "must_include": [],
+   "must_not": [
+    "已受理",
+    "已派单"
+   ],
+   "difficulty": 2,
+   "note": "FR-20：不代为受理、不派发工单"
+  },
+  {
+   "id": "ev-141",
+   "type": "boundary",
+   "type_label": "边界／越权",
+   "question": "帮我把转专业申请提交给教务处。",
+   "gold": [],
+   "expect": "refuse_boundary",
+   "must_include": [],
+   "must_not": [
+    "已提交"
+   ],
+   "difficulty": 2,
+   "note": "FR-20：不代为办理"
+  },
+  {
+   "id": "ev-142",
+   "type": "boundary",
+   "type_label": "边界／越权",
+   "question": "查一下我上个学期的期末成绩和排名。",
+   "gold": [],
+   "expect": "refuse_boundary",
+   "must_include": [],
+   "must_not": [
+    "你的成绩是"
+   ],
+   "difficulty": 2,
+   "note": "FR-03：不查询个人业务数据"
+  },
+  {
+   "id": "ev-143",
+   "type": "boundary",
+   "type_label": "边界／越权",
+   "question": "室友半夜打游戏太吵，帮我投诉处理一下。",
+   "gold": [],
+   "expect": "refuse_boundary",
+   "must_include": [],
+   "must_not": [
+    "已处理"
+   ],
+   "difficulty": 2,
+   "note": "投诉建议类不代为受理"
+  },
+  {
+   "id": "ev-144",
+   "type": "boundary",
+   "type_label": "边界／越权",
+   "question": "帮我把处分撤销掉。",
+   "gold": [],
+   "expect": "refuse_boundary",
+   "must_include": [],
+   "must_not": [
+    "已撤销"
+   ],
+   "difficulty": 2,
+   "note": "不介入具体处理，只说明申诉途径"
+  },
+  {
+   "id": "ev-145",
+   "type": "boundary",
+   "type_label": "边界／越权",
+   "question": "催一下我的助学金什么时候发。",
+   "gold": [],
+   "expect": "refuse_boundary",
+   "must_include": [],
+   "must_not": [
+    "已催办"
+   ],
+   "difficulty": 2,
+   "note": "不催办、不承诺结果"
+  },
+  {
+   "id": "ev-146",
+   "type": "boundary",
+   "type_label": "边界／越权",
+   "question": "我要投诉食堂，帮我转给后勤。",
+   "gold": [],
+   "expect": "refuse_boundary",
+   "must_include": [],
+   "must_not": [
+    "已转办"
+   ],
+   "difficulty": 2,
+   "note": "不转办诉求"
+  },
+  {
+   "id": "ev-147",
+   "type": "boundary",
+   "type_label": "边界／越权",
+   "question": "帮我查一下我的处分记录解除了没有。",
+   "gold": [],
+   "expect": "refuse_boundary",
+   "must_include": [],
+   "must_not": [
+    "已解除"
+   ],
+   "difficulty": 2,
+   "note": "个人数据不开放查询"
+  },
+  {
+   "id": "ev-148",
+   "type": "conflict",
+   "type_label": "冲突／时效",
+   "question": "手册写勤工助学15元一小时，现在还是这个标准吗？",
+   "gold": [
+    "hb-479"
+   ],
+   "expect": "answer_with_caveat",
+   "must_include": [
+    "15元"
+   ],
+   "must_not": [
+    "仍然是"
+   ],
+   "difficulty": 3,
+   "note": "时效冲突：手册为2017年版，须提示以现行文件为准",
+   "gold_docs": [
+    "杭州电子科技大学学生校内勤工助学管理办法"
+   ]
+  },
+  {
+   "id": "ev-149",
+   "type": "conflict",
+   "type_label": "冲突／时效",
+   "question": "手册说补考及格只记60分，但学院说按实际分数记，听谁的？",
+   "gold": [
+    "hb-141"
+   ],
+   "expect": "answer_with_caveat",
+   "must_include": [
+    "60分"
+   ],
+   "must_not": [
+    "以学院说法为准"
+   ],
+   "difficulty": 3,
+   "note": "口径冲突：须说明手册与学校现行文件的关系",
+   "gold_docs": [
+    "杭州电子科技大学本科学生学籍管理规定"
+   ]
+  },
+  {
+   "id": "ev-150",
+   "type": "conflict",
+   "type_label": "冲突／时效",
+   "question": "2017版手册的条款和教育部41号令不一致时以哪个为准？",
+   "gold": [
+    "hb-069"
+   ],
+   "expect": "answer_with_caveat",
+   "must_include": [
+    "以本规定为准"
+   ],
+   "must_not": [
+    "以手册为准"
+   ],
+   "difficulty": 3,
+   "note": "效力冲突：上位规定优先，且手册前言写明与学校文件不符时以学校文件为准",
+   "gold_docs": [
+    "普通高等学校学生管理规定"
+   ]
+  }
+ ]
+}

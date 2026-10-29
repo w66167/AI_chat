@@ -1,0 +1,288 @@
+{
+ "source": "学生手册.pdf",
+ "pages": 206,
+ "chunks": 586,
+ "chars": 75150,
+ "docs": [
+  {
+   "index": 1,
+   "name": "普通高等学校学生管理规定",
+   "page_start": 1,
+   "page_end": 21,
+   "chunks": 69,
+   "chars": 8641,
+   "chapters": 7,
+   "articles": 68
+  },
+  {
+   "index": 2,
+   "name": "高等学校学生行为准则",
+   "page_start": 22,
+   "page_end": 23,
+   "chunks": 9,
+   "chars": 658,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 3,
+   "name": "学生伤害事故处理办法",
+   "page_start": 24,
+   "page_end": 33,
+   "chunks": 41,
+   "chars": 4293,
+   "chapters": 6,
+   "articles": 40
+  },
+  {
+   "index": 4,
+   "name": "杭州电子科技大学本科学生学籍管理规定",
+   "page_start": 34,
+   "page_end": 55,
+   "chunks": 65,
+   "chars": 9243,
+   "chapters": 11,
+   "articles": 64
+  },
+  {
+   "index": 5,
+   "name": "杭州电子科技大学本科学生成绩管理规定",
+   "page_start": 56,
+   "page_end": 58,
+   "chunks": 4,
+   "chars": 1430,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 6,
+   "name": "杭州电子科技大学本科学生转学实施细则（试行）",
+   "page_start": 59,
+   "page_end": 63,
+   "chunks": 9,
+   "chars": 2014,
+   "chapters": 5,
+   "articles": 8
+  },
+  {
+   "index": 7,
+   "name": "杭州电子科技大学转专业（类）与大类分流实施办法",
+   "page_start": 64,
+   "page_end": 69,
+   "chunks": 15,
+   "chars": 2318,
+   "chapters": 4,
+   "articles": 14
+  },
+  {
+   "index": 8,
+   "name": "杭州电子科技大学本科毕业生学士学位授予细则",
+   "page_start": 70,
+   "page_end": 73,
+   "chunks": 11,
+   "chars": 1777,
+   "chapters": 0,
+   "articles": 10
+  },
+  {
+   "index": 9,
+   "name": "杭州电子科技大学学生纪律处分实施细则",
+   "page_start": 74,
+   "page_end": 87,
+   "chunks": 39,
+   "chars": 5845,
+   "chapters": 5,
+   "articles": 38
+  },
+  {
+   "index": 10,
+   "name": "杭州电子科技大学学生校内申诉管理规定",
+   "page_start": 88,
+   "page_end": 94,
+   "chunks": 32,
+   "chars": 2767,
+   "chapters": 6,
+   "articles": 31
+  },
+  {
+   "index": 11,
+   "name": "考场规则",
+   "page_start": 95,
+   "page_end": 97,
+   "chunks": 10,
+   "chars": 1038,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 12,
+   "name": "杭州电子科技大学学生考试违规、作弊的认定办法",
+   "page_start": 98,
+   "page_end": 100,
+   "chunks": 10,
+   "chars": 1022,
+   "chapters": 3,
+   "articles": 9
+  },
+  {
+   "index": 13,
+   "name": "杭州电子科技大学本科生选课管理办法",
+   "page_start": 101,
+   "page_end": 105,
+   "chunks": 6,
+   "chars": 2138,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 14,
+   "name": "杭州电子科技大学本科生修读辅修专业、第二本科专业、第二学士学位的管理办法",
+   "page_start": 106,
+   "page_end": 111,
+   "chunks": 9,
+   "chars": 2369,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 15,
+   "name": "杭州电子科技大学本科生课外教育管理规定",
+   "page_start": 112,
+   "page_end": 115,
+   "chunks": 6,
+   "chars": 1861,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 16,
+   "name": "关于学生参加毕业设计（论文）的若干规定",
+   "page_start": 116,
+   "page_end": 117,
+   "chunks": 12,
+   "chars": 876,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 17,
+   "name": "杭州电子科技大学创新与拓展学分认定管理办法",
+   "page_start": 118,
+   "page_end": 126,
+   "chunks": 25,
+   "chars": 1702,
+   "chapters": 6,
+   "articles": 24
+  },
+  {
+   "index": 18,
+   "name": "课堂管理规则",
+   "page_start": 127,
+   "page_end": 128,
+   "chunks": 13,
+   "chars": 610,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 19,
+   "name": "杭州电子科技大学学生证、校徽和火车票优惠卡管理办法",
+   "page_start": 129,
+   "page_end": 130,
+   "chunks": 9,
+   "chars": 722,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 20,
+   "name": "杭州电子科技大学三好学生、优秀学生干部评比办法",
+   "page_start": 131,
+   "page_end": 133,
+   "chunks": 5,
+   "chars": 792,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 21,
+   "name": "杭州电子科技大学本科生奖学金评审办法",
+   "page_start": 134,
+   "page_end": 138,
+   "chunks": 7,
+   "chars": 843,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 22,
+   "name": "杭州电子科技大学学生综合测评实施办法",
+   "page_start": 139,
+   "page_end": 142,
+   "chunks": 15,
+   "chars": 1242,
+   "chapters": 4,
+   "articles": 14
+  },
+  {
+   "index": 23,
+   "name": "杭州电子科技大学国家奖学金、省政府奖学金、国家励志奖学金和国家助学金评比办法",
+   "page_start": 143,
+   "page_end": 157,
+   "chunks": 33,
+   "chars": 6042,
+   "chapters": 8,
+   "articles": 32
+  },
+  {
+   "index": 24,
+   "name": "杭州电子科技大学家庭经济困难学生认定办法",
+   "page_start": 158,
+   "page_end": 163,
+   "chunks": 23,
+   "chars": 2393,
+   "chapters": 5,
+   "articles": 22
+  },
+  {
+   "index": 25,
+   "name": "杭州电子科技大学学生校内勤工助学管理办法",
+   "page_start": 164,
+   "page_end": 170,
+   "chunks": 10,
+   "chars": 2922,
+   "chapters": 0,
+   "articles": 0
+  },
+  {
+   "index": 26,
+   "name": "杭州电子科技大学学生住宿管理规定",
+   "page_start": 171,
+   "page_end": 179,
+   "chunks": 52,
+   "chars": 3493,
+   "chapters": 8,
+   "articles": 51
+  },
+  {
+   "index": 27,
+   "name": "杭州电子科技大学学生医疗相关规定",
+   "page_start": 180,
+   "page_end": 187,
+   "chunks": 7,
+   "chars": 2730,
+   "chapters": 1,
+   "articles": 0
+  },
+  {
+   "index": 28,
+   "name": "杭州电子科技大学学生社团管理条例（试行）",
+   "page_start": 188,
+   "page_end": 206,
+   "chunks": 40,
+   "chars": 3369,
+   "chapters": 7,
+   "articles": 39
+  }
+ ]
+}

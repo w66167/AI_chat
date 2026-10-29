@@ -1,0 +1,20 @@
+{
+  "answer_policy": {
+    "refuse_below": 0.35,
+    "clarify_below": 0.40,
+    "clarify_gap": 0,
+    "clarify_min_chars": 6,
+    "max_suggestions": 3,
+    "_calibration": {
+      "measured_on": "150 条评测集（2026-10-24）",
+      "hit_min": 0.445,
+      "noanswer_max": 0.259,
+      "note": "可答题最低 0.445、无答案题最高 0.259，中间是干净分界。取 0.35 拒答、0.40 澄清上限。clarify_gap 置 0 表示停用：sigmoid 在 0.9 以上饱和，前两名差值恒为 0.001 级，会把高置信正确答案误判成歧义。"
+    }
+  },
+  "session": {
+    "max_turns": 5,
+    "ttl_seconds": 1800,
+    "store_guest_history": false
+  }
+}

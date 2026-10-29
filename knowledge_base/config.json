@@ -1,0 +1,50 @@
+{
+  "corpus": {
+    "chunks_path": "data/handbook_chunks.jsonl",
+    "version": "hb-2017-v1",
+    "max_chars": 500,
+    "min_chars": 40,
+    "exclude_articles": ["导语"]
+  },
+  "embedder": {
+    "active": "bge-large-zh-v1.5",
+    "device": "cuda",
+    "batch_size": 32,
+    "normalize": true,
+    "cache_dir": ".cache/models",
+    "models": {
+      "bge-large-zh-v1.5": {
+        "model_id": "BAAI/bge-large-zh-v1.5",
+        "mirror_ids": ["AI-ModelScope/bge-large-zh-v1.5"],
+        "query_prefix": "",
+        "dim": 1024,
+        "max_length": 512,
+        "query_prefix_note": "实测带指令前缀反而降分（74.5%→78.2%），故置空"
+      },
+      "bge-m3": {
+        "model_id": "BAAI/bge-m3",
+        "mirror_ids": ["AI-ModelScope/bge-m3"],
+        "query_prefix": "",
+        "dim": 1024,
+        "max_length": 8192
+      }
+    }
+  },
+  "reranker": {
+    "enabled": true,
+    "model_id": "BAAI/bge-reranker-v2-m3",
+    "mirror_ids": ["AI-ModelScope/bge-reranker-v2-m3"],
+    "batch_size": 16,
+    "max_length": 512
+  },
+  "retrieval": {
+    "mode": "hybrid",
+    "candidates": 20,
+    "rrf_k": 60,
+    "top_k": 3
+  },
+  "paths": {
+    "index_dir": "data/indexes",
+    "eval_path": "data/eval_questions.json"
+  }
+}
