@@ -12,6 +12,7 @@ Page({
     busy: false,
     loading: false,
     online: false,
+    roleName: '学生',
     expanded: {},
     starters: ['宿舍几点熄灯？', '挂科了还能补考吗？', '转专业需要什么条件？']
   },
@@ -31,6 +32,7 @@ Page({
     const messages = store.read().messages;
     this.setData({
       messages,
+      roleName: store.role().name,
       scrollTarget: messages.length ? 'msg-' + messages[messages.length - 1].id : ''
     });
   },

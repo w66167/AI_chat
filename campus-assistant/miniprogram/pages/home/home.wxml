@@ -1,43 +1,22 @@
-<view class="home">
+<view class="page home-page">
+  <view class="brand-line"><text class="eyebrow">CAMPUS ASSISTANT</text><text class="online"><text class="dot"></text>{{online ? '学生手册在线' : '本地演示'}}</text></view>
   <view class="hero">
-    <view class="hero-top">
-      <text class="brand">校园知答</text>
-      <view class="status {{online ? 'on' : 'off'}}">
-        <view class="dot"></view>
-        <text>{{online ? '在线' : '本地'}}</text>
-      </view>
-    </view>
-    <text class="hero-title">问点校园里的事</text>
-    <text class="hero-sub">答案来自《学生手册》，每条都带出处</text>
+    <view class="hero-label">你的校园生活小助手</view>
+    <view class="hero-title">校园的事，<br/>在这里问。</view>
+    <view class="hero-desc">找流程、查指南，让每个答案都有出处。</view>
+    <view class="hero-ornament"><view class="orbit orbit-one"></view><view class="orbit orbit-two"></view><text class="hero-spark">✳</text></view>
+    <button class="hero-button" bindtap="ask"><text>开始咨询</text><text>↗</text></button>
+    <view class="hero-foot">{{count}} 条{{online ? '学生手册' : '已发布'}}知识 · 6 类校园服务</view>
   </view>
-
-  <view class="ask-box">
-    <input class="ask-input" value="{{question}}" placeholder="比如：宿舍几点熄灯" confirm-type="send"
-           bindinput="inputChange" bindconfirm="ask" />
-    <button class="ask-btn" bindtap="ask" disabled="{{!question}}">问</button>
-  </view>
-
-  <view class="section-head">
-    <text class="section-title">常问</text>
-    <text class="section-link" bindtap="openServices">办事指南 ›</text>
-  </view>
-  <view class="chips">
-    <button class="chip" wx:for="{{hot}}" wx:key="*this" data-question="{{item}}" bindtap="ask">{{item}}</button>
-  </view>
-
-  <view class="section-head"><text class="section-title">按事项找</text></view>
-  <view class="entries">
-    <button class="entry" wx:for="{{entries}}" wx:key="label" data-question="{{item.question}}" bindtap="ask">
-      <view class="entry-mark {{item.color}}">{{item.mark}}</view>
-      <view class="entry-text">
-        <text class="entry-label">{{item.label}}</text>
-        <text class="entry-desc">{{item.desc}}</text>
-      </view>
+  <view class="section-head"><text class="section-title">常用服务</text><button class="section-link" bindtap="openServices">全部指南 →</button></view>
+  <view class="quick-grid">
+    <button class="quick-card" wx:for="{{quickLinks}}" wx:key="label" data-question="{{item.question}}" bindtap="ask">
+      <view class="service-mark {{item.color}}">{{item.mark}}</view><view class="quick-title">{{item.label}}</view><view class="muted">{{item.hint}}</view>
     </button>
   </view>
-
-  <view class="foot">
-    <text>{{online ? '已接入学生手册 2017 版 · ' + knowledgeCount + ' 条知识' : '本地演示 · ' + knowledgeCount + ' 条示例'}}</text>
-    <text class="foot-dim">仅供信息查询，不代为办理 · 请勿输入证件号等个人信息</text>
+  <view class="section-head"><text class="section-title">大家常问</text><text class="muted">从这里开始</text></view>
+  <view class="question-list">
+    <button class="question-row" wx:for="{{questions}}" wx:key="*this" data-question="{{item}}" bindtap="ask"><text class="question-index">0{{index + 1}}</text><text class="question-text">{{item}}</text><text class="question-arrow">↗</text></button>
   </view>
+  <view class="demo-foot"><text class="foot-dot"></text>{{online ? '内容来自学生手册 · 实际办理以本校公告为准' : '课题演示 · 使用样例资料，办理以本校公告为准'}}</view>
 </view>

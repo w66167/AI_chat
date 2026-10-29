@@ -2,25 +2,26 @@
   "pages": [
     "pages/home/home",
     "pages/chat/chat",
-    "pages/mine/mine",
     "pages/services/services",
+    "pages/mine/mine",
     "pages/detail/detail",
     "pages/manage/manage"
   ],
   "window": {
     "navigationBarTitleText": "校园知答",
-    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarBackgroundColor": "#f5f7fa",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f7f8fa"
+    "backgroundColor": "#f5f7fa"
   },
   "tabBar": {
-    "color": "#8a93a5",
-    "selectedColor": "#2b6ef2",
+    "color": "#83909d",
+    "selectedColor": "#176b5b",
     "backgroundColor": "#ffffff",
     "borderStyle": "white",
     "list": [
       { "pagePath": "pages/home/home", "text": "首页" },
-      { "pagePath": "pages/chat/chat", "text": "问答" },
+      { "pagePath": "pages/chat/chat", "text": "问一问" },
+      { "pagePath": "pages/services/services", "text": "办事指南" },
       { "pagePath": "pages/mine/mine", "text": "我的" }
     ]
   },
