@@ -7,8 +7,10 @@
 //   3. session_id 存在本地，用于多轮承接（后端据此拼上一轮问题）。
 
 const BASE_URL = 'http://127.0.0.1:8000';   // 换服务器/域名只改这一行
+const ONLINE_MODE = false;                  // true：在线优先；false：完全使用本地知识
 const SESSION_KEY = 'campus_assistant_session';
 const TIMEOUT = 15000;   // 冷启动要加载模型，8 秒会误判超时
+const LOCAL_MODE_RESULT = { ok: false, error: 'LOCAL_MODE' };
 
 function sessionId() {
   let id = wx.getStorageSync(SESSION_KEY);
@@ -46,9 +48,13 @@ function request(path, method, data) {
   });
 }
 
-function health() { return request('/v1/health', 'GET'); }
+function health() {
+  if (!ONLINE_MODE) return Promise.resolve(LOCAL_MODE_RESULT);
+  return request('/v1/health', 'GET');
+}
 
 function ask(question, history, identityType) {
+  if (!ONLINE_MODE) return Promise.resolve(LOCAL_MODE_RESULT);
   // FR-16：身份适用范围由客户端显式上报（guest / student / teacher / staff），
   // 服务端按此过滤知识；缺省按游客处理，宁可少答也不越权。
   return request('/v1/ask', 'POST', {
@@ -60,7 +66,10 @@ function ask(question, history, identityType) {
   });
 }
 
-function feedback(payload) { return request('/v1/feedback', 'POST', payload); }
+function feedback(payload) {
+  if (!ONLINE_MODE) return Promise.resolve(LOCAL_MODE_RESULT);
+  return request('/v1/feedback', 'POST', payload);
+}
 
 // 后端 behavior 五档 → 聊天页的三种展示形态
 const KIND = {
@@ -119,4 +128,4 @@ function toMessage(resp) {
   };
 }
 
-module.exports = { BASE_URL, health, ask, feedback, toMessage, sessionId, resetSession };
+module.exports = { BASE_URL, ONLINE_MODE, health, ask, feedback, toMessage, sessionId, resetSession };

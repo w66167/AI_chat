@@ -16,6 +16,7 @@ global.wx = {
 };
 const store = require('../miniprogram/utils/store');
 const qa = require('../miniprogram/utils/qa');
+const handbookLocal = require('../miniprogram/data/handbook_local');
 const app = JSON.parse(fs.readFileSync(path.join(mini, 'app.json'), 'utf8'));
 const project = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'));
 assert.equal(project.miniprogramRoot, 'miniprogram/');
@@ -54,9 +55,12 @@ const chatCode = fs.readFileSync(path.join(mini, 'pages', 'chat', 'chat.js'), 'u
 if (/api\.ask\s*\(/.test(chatCode)) {
   assert.ok(/qa\.answer\s*\(/.test(chatCode), '在线模式必须保留本地回退（qa.answer）');
 }
+assert.ok(/behavior\s*===\s*['"]refuse_noanswer['"]/.test(chatCode),
+  '在线接口返回无答案时必须继续尝试本地知识库');
 // FR-16：身份适用范围必须随请求上报，服务端才能过滤（默认游客）。
 const apiCode = fs.readFileSync(path.join(mini, 'utils', 'api.js'), 'utf8');
 assert.ok(/identity_type/.test(apiCode), 'utils/api.js 必须把身份作为 scope.identity_type 上报');
+assert.ok(/ONLINE_MODE\s*=\s*false/.test(apiCode), '当前版本应固定使用本地知识模式');
 // 页面不得绕过 store 直接判断角色（工作台入口必须走 role.workbench）。
 assert.ok(!/role\.id\s*!==\s*'student'/.test(fs.readFileSync(path.join(mini, 'pages', 'mine', 'mine.js'), 'utf8')), '“我的”页不得用 role.id !== \'student\' 判断工作台权限');
 console.log('PASS 项目入口、六个页面文件、JSON 与 JavaScript 语法；联网仅限 utils/api.js，且聊天页保留离线回退');
@@ -76,6 +80,32 @@ for (const q of ['月球上可以种什么花？', '图书馆能吃火锅吗？'
   assert.equal(qa.answer(q, store.getKnowledge()).kind, 'fallback', q);
 }
 console.log('PASS 20 条标题与全部同义问法、自然问法、追问、澄清、无答案与答复边界');
+
+// ---- 学生手册本地知识库：30 条整理问答 + 586 条手册正文块
+assert.equal(handbookLocal.entries.length, 30);
+assert.equal(handbookLocal.chunks.length, 586);
+assert.equal(handbookLocal.meta.kbId, 'student-handbook');
+const handbookDorm = qa.answer('宿舍几点熄灯？', store.getKnowledge(), null, null, handbookLocal);
+assert.equal(handbookDorm.kind, 'answer');
+assert.equal(handbookDorm.handbookChunkId, 'hb-510');
+assert.equal(handbookDorm.article, '第二十二条');
+assert.equal(handbookDorm.page, 174);
+assert.equal(handbookDorm.libraryName, '学生手册');
+assert.equal(handbookDorm.libraryIndexReady, true);
+const handbookMakeup = qa.answer('补考多少分及格？', store.getKnowledge(), null, null, handbookLocal);
+assert.equal(handbookMakeup.kind, 'answer');
+assert.equal(handbookMakeup.handbookChunkId, 'hb-141');
+assert.equal(handbookMakeup.article, '第二十一条');
+assert.equal(handbookMakeup.page, 42);
+assert.match(handbookMakeup.text, /60分/);
+const handbookDiploma = qa.answer('毕业证书遗失怎么办？', store.getKnowledge(), null, null, handbookLocal);
+assert.equal(handbookDiploma.kind, 'answer');
+assert.equal(handbookDiploma.handbookChunkId, 'hb-039');
+assert.equal(handbookDiploma.article, '第三十八条');
+assert.equal(handbookDiploma.page, 13);
+assert.equal(qa.answer('校园卡丢了怎么办？', store.getKnowledge(), null, null, handbookLocal).knowledgeId, 'card-loss');
+assert.equal(qa.answer('宿舍几点熄灯？', store.getKnowledge(), null, null, null).kind, 'fallback');
+console.log('PASS 学生手册本地检索：30 条问答、586 条正文、人工问答与正文块、公开知识优先级、游客隔离');
 
 // ---- 角色与身份适用范围（需求文档 2.1、FR-01、FR-16）
 assert.deepEqual(store.roles.map((item) => item.id), ['guest', 'student', 'teacher', 'maintainer', 'reviewer']);

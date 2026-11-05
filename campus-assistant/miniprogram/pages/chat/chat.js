@@ -1,9 +1,10 @@
 const store = require('../../utils/store');
 const qa = require('../../utils/qa');
 const api = require('../../utils/api');
+const handbookLocal = require('../../data/handbook_local');
 
-// 在线优先：后端可用时走真实检索（bge + 重排，579 个知识块），
-// 不可用时静默回退到本地演示知识，保证断网/未启动服务时也能演示。
+// 在线/本地由 utils/api.js 的 ONLINE_MODE 控制；本地模式不发起网络请求，
+// 直接使用本机已发布知识。
 Page({
   data: {
     messages: [],
@@ -82,8 +83,19 @@ Page({
         return;
       }
       if (res.ok) {
+        const response = res.data || {};
+        // 在线检索目前只覆盖学生手册。学生手册没有命中时，再用本机公开
+        // 办事知识兜底，避免“校园卡丢了怎么办”等本地条目被在线拒答覆盖。
+        if (response.behavior === 'refuse_noanswer') {
+          const local = this.localAnswer(question, last);
+          if (local && local.kind === 'answer') {
+            this.setData({ online: true, kbNotice: '' });
+            this.append(question, stamp, local);
+            return;
+          }
+        }
         this.setData({ online: true, kbNotice: '' });
-        this.append(question, stamp, api.toMessage(res.data));
+        this.append(question, stamp, api.toMessage(response));
         return;
       }
       // 后端不可用：回退本地演示（按当前身份过滤，范围外有更贴近的条目时兜底）
@@ -95,7 +107,15 @@ Page({
   },
 
   localAnswer(question, last) {
-    return qa.answer(question, store.getKnowledge(), last && last.knowledgeId, store.getRestrictedKnowledge());
+    const current = store.role();
+    const canUseHandbook = store.librariesFor(current).some((item) => item.id === 'student-handbook');
+    return qa.answer(
+      question,
+      store.getKnowledge(),
+      last && last.knowledgeId,
+      store.getRestrictedKnowledge(),
+      canUseHandbook ? handbookLocal : null
+    );
   },
 
   append(question, stamp, result) {
