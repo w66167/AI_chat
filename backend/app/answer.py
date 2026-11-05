@@ -1,18 +1,19 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """回答策略：决定「答 / 澄清 / 拒答 / 拒绝越界」，并拼装带出处的答案。
 
 这一层刻意不接大模型：先用条文原文 + 出处拼装，保证每一句都有依据。
 接 7B 之后，这一层仍然是兜底路径（NFR-02 要求模型不可用时降级）。
 
-三条规则的依据：
+四条规则的依据：
   FR-11 置信度三档 → 高分直接答、中分澄清、低分拒答
   FR-12 无答案检测 → 低于阈值必须明确拒答，不编造
+  FR-16 适用范围   → 先按身份确定可检索的知识库，再在范围内检索并标注来源
   FR-20 答复边界   → 代办理/查个人数据/投诉转办一律不接，只给途径
 """
 import math
 import re
 
-from . import deps, session
+from . import deps, libraries, session
 
 # 越界请求：代办理、查个人数据、投诉转办、催办（FR-20 / FR-03）
 BOUNDARY_RULES = [
@@ -106,7 +107,8 @@ def _topic_only(question):
     return None
 
 
-def _citation(chunk, version=1):
+def _citation(chunk, kb_id):
+    """引用必须能回答「出自哪个知识库、哪份文件、哪一条、哪一页」。"""
     return {
         'chunk_id': chunk.id,
         'doc': chunk.doc,
@@ -115,8 +117,9 @@ def _citation(chunk, version=1):
         'page_end': chunk.page_end,
         'source': chunk.source,
         'excerpt': chunk.text[:160],
-        'version': version,
+        'version': 1,
         'updated_at': None,
+        'kb': libraries.citation_kb(kb_id),
     }
 
 
@@ -132,113 +135,152 @@ def _history_query(question, req, session_id):
     return question
 
 
+def _versions(items):
+    return ' + '.join('%s@%s' % (i['name'], i['version']) for i in items)
+
+
+def _names(items):
+    return '、'.join(i['name'] for i in items) if items else '（无）'
+
+
+def _resp(base, **kwargs):
+    out = dict(base)
+    out.update(kwargs)
+    return out
+
+
 def respond(req, cfg=None, retriever=None):
     cfg = cfg or deps.get_config()
-    retriever = retriever or deps.get_retriever()
-    policy = cfg['answer_policy']
+    identity = req.scope.identity_type.value
     session_id = req.session_id or session.new_id()
     question = req.question.strip()
+
+    # ① 先按身份确定「能访问哪些知识库」和「其中哪些真的能检索」（FR-16）
+    accessible = libraries.for_identity(identity)
+    searchable = libraries.searchable_for(identity)
+    pending = libraries.pending_for(identity)
+    base = {
+        'trace_id': _trace(question), 'session_id': session_id,
+        'knowledge_bases': [libraries.brief(item) for item in searchable],
+        'kb_pending': [item['name'] for item in pending],
+        'kb_gap': False, 'kb_gap_reason': '',
+    }
+
+    # ② 身份对应的知识库一个都没接入检索：如实说明，不拿别人的知识库硬答
+    if not searchable:
+        reason = ('按当前身份（%s）可访问的知识库是「%s」，但都还没有接入在线检索服务，'
+                  '本次已改用本机已发布的公开知识回答。' % (identity, _names(accessible)))
+        return _resp(base,
+                     behavior='refuse_noanswer',
+                     answer='当前身份可访问的知识库（%s）尚未接入在线检索，服务端没有可检索的知识来源。'
+                            % _names(accessible),
+                     citations=[], confidence=0.0, suggestions=[], boundary=None,
+                     degraded=True, kb_gap=True, kb_gap_reason=reason,
+                     knowledge_version='', latency_ms=0)
+
+    retriever = retriever or deps.get_retriever()
+    policy = cfg['answer_policy']
     chunks = retriever.chunks
 
-    # ① 边界：先拦，越界问题不进检索
+    def refuse(confidence=0.0):
+        return _refuse(question, session_id, base, searchable, pending, confidence)
+
+    # ③ 边界：先拦，越界问题不进检索
     category = _boundary_of(question)
     if category:
-        return {
-            'trace_id': _trace(question), 'session_id': session_id,
-            'behavior': 'refuse_boundary',
-            'answer': BOUNDARY_MESSAGES[category],
-            'citations': [], 'confidence': 0.0, 'suggestions': [],
-            'boundary': {'category': category, 'message': BOUNDARY_MESSAGES[category],
-                         'channel': {'unit': '', 'window': '', 'phone': '',
-                                     'service_hours': '', 'url': None,
-                                     'url_checked_at': None, 'note': CHANNEL_NOTE}},
-            'degraded': False, 'knowledge_version': cfg.kb['corpus']['version'],
-            'latency_ms': 0,
-        }
+        return _resp(base,
+                     behavior='refuse_boundary',
+                     answer=BOUNDARY_MESSAGES[category],
+                     citations=[], confidence=0.0, suggestions=[],
+                     boundary={'category': category, 'message': BOUNDARY_MESSAGES[category],
+                               'channel': {'unit': '', 'window': '', 'phone': '',
+                                           'service_hours': '', 'url': None,
+                                           'url_checked_at': None, 'note': CHANNEL_NOTE}},
+                     degraded=False, knowledge_version=_versions(searchable), latency_ms=0)
 
-    # ② 澄清：只有话题词
-    # ② 只给话题词 → 澄清；纯疑问套话（「怎么办？」）也走这条
+    # ④ 澄清：只有话题词；纯疑问套话（「怎么办？」）也走这条
     topic = _topic_only(question)
     if topic or VAGUE_RE.match(question.strip()):
         options = _suggestions(question, policy['max_suggestions'])
         text = ('你想了解「%s」的哪方面？可以补充具体事项，或从下面的问题里选一个。' % topic
                 if topic else '能再说具体一点吗？比如你要办什么事、遇到的什么情况。')
-        return {
-            'trace_id': _trace(question), 'session_id': session_id,
-            'behavior': 'clarify',
-            'answer': text,
-            'citations': [], 'confidence': 0.3,
-            'suggestions': options,
-            'boundary': None, 'degraded': False,
-            'knowledge_version': cfg.kb['corpus']['version'], 'latency_ms': 0,
-        }
+        return _resp(base,
+                     behavior='clarify', answer=text, citations=[], confidence=0.3,
+                     suggestions=options, boundary=None, degraded=False,
+                     knowledge_version=_versions(searchable), latency_ms=0)
 
-    # ③ 检索
+    # ⑤ 检索：先取候选，再按「身份可检索的知识库」过滤，最后取 top_k。
+    #    先过滤后取 top_k 而不是反过来——否则范围外的块会白占名额，出现「明明有权限却查不到」。
     query = _history_query(question, req, req.session_id)
-    hits = retriever.search(query, k=cfg.kb['retrieval']['top_k'])
+    allowed = [item['id'] for item in searchable]
+    pool = max(cfg.kb['retrieval']['top_k'], cfg.kb['retrieval'].get('candidates', 20))
+    hits = libraries.filter_hits(retriever.search(query, k=pool), allowed)
+    hits = hits[:cfg.kb['retrieval']['top_k']]
     if not hits:
-        return _refuse(question, session_id, cfg, retriever)
+        return refuse()
 
     top_id, top_score = hits[0]
     confidence = _sigmoid(top_score)
     second = _sigmoid(hits[1][1]) if len(hits) > 1 else 0.0
 
-    # ④ 低置信 → 拒答（FR-12）
+    # ⑥ 低置信 → 拒答（FR-12）
     if confidence < policy['refuse_below']:
-        return _refuse(question, session_id, cfg, retriever, confidence)
+        return refuse(confidence)
 
-    # ⑤ 中置信 → 澄清（FR-11 中间档）
+    # ⑦ 中置信 → 澄清（FR-11 中间档）
     # 注意：不再用「前两名分数太接近」作判据。rerank logit 经 sigmoid 后在 0.9 以上
     # 会饱和，两条都在 0.99 时差值恒为 0.001 级，会把高置信的正确回答误判成歧义
-    # （实测「学分没修满能拿毕业证吗」置信度 0.95 却被澄清）。歧义由 ② 的话题词规则承担。
+    # （实测「学分没修满能拿毕业证吗」置信度 0.95 却被澄清）。歧义由 ④ 的话题词规则承担。
     if confidence < policy['clarify_below']:
         top = chunks[top_id]
-        return {
-            'trace_id': _trace(question), 'session_id': session_id,
-            'behavior': 'clarify',
-            'answer': '我不太确定你指的是哪一项。是不是想问：%s？' % _title(top),
-            'citations': [_citation(top)], 'confidence': round(confidence, 3),
-            'suggestions': _suggestions(question, policy['max_suggestions']),
-            'boundary': None, 'degraded': False,
-            'knowledge_version': cfg.kb['corpus']['version'], 'latency_ms': 0,
-        }
+        return _resp(base,
+                     behavior='clarify',
+                     answer='我不太确定你指的是哪一项。是不是想问：%s？' % _title(top),
+                     citations=[_citation(top, libraries.kb_of_chunk(top_id))],
+                     confidence=round(confidence, 3),
+                     suggestions=_suggestions(question, policy['max_suggestions']),
+                     boundary=None, degraded=False,
+                     knowledge_version=_versions(searchable), latency_ms=0)
 
-    # ⑥ 正常作答：条文原文 + 出处；时效类问题追加「以现行文件为准」
+    # ⑧ 正常作答：条文原文 + 出处；时效类问题追加「以现行文件为准」
     top = chunks[top_id]
     answer = '%s\n\n出处：%s' % (top.text, top.source)
     behavior = 'answer'
     if CAVEAT_RE.search(question):
         answer += CAVEAT_TEXT
         behavior = 'answer_with_caveat'
-    return {
-        'trace_id': _trace(question), 'session_id': session_id,
-        'behavior': behavior, 'answer': answer,
-        'citations': [_citation(c) for c, _ in ((chunks[cid], s) for cid, s in hits)],
-        'confidence': round(confidence, 3),
-        'suggestions': _suggestions(question, policy['max_suggestions']),
-        'boundary': None, 'degraded': False,
-        'knowledge_version': cfg.kb['corpus']['version'], 'latency_ms': 0,
-    }
+    citations = [_citation(chunks[cid], libraries.kb_of_chunk(cid)) for cid, _ in hits]
+    # 本次能访问、但还没接入检索的知识库要在答案末尾说清楚，避免「以为查过了全部知识」
+    if pending:
+        answer += '\n\n（说明：你的身份还可以访问「%s」，该知识库尚未接入检索，本次没有检索它。）' \
+                  % _names(pending)
+    return _resp(base,
+                 behavior=behavior, answer=answer, citations=citations,
+                 confidence=round(confidence, 3),
+                 suggestions=_suggestions(question, policy['max_suggestions']),
+                 boundary=None, degraded=False,
+                 knowledge_version=_versions(searchable), latency_ms=0)
 
 
 def _title(chunk):
     return '%s%s' % (chunk.article or '', '（第%d页）' % chunk.page_start)
 
 
-def _refuse(question, session_id, cfg, retriever, confidence=0.0):
+def _refuse(question, session_id, base, searchable, pending, confidence=0.0):
     """无答案：明确说查不到，并给出「去哪儿问」，不编造任何事实。"""
-    return {
-        'trace_id': _trace(question), 'session_id': session_id,
-        'behavior': 'refuse_noanswer',
-        'answer': '当前知识库（学生手册 2017 年版）里没有足够可靠的依据回答这个问题，'
-                  '我不做推测。建议你确认具体事项，或通过学校官网/所属部门公布的渠道核实。',
-        'citations': [], 'confidence': round(confidence, 3), 'suggestions': [],
-        'boundary': {'category': 'offline_required',
-                     'message': '本系统只提供已审核知识的查询，无法回答知识库外的问题。',
-                     'channel': {'unit': '', 'window': '', 'phone': '', 'service_hours': '',
-                                 'url': None, 'url_checked_at': None, 'note': CHANNEL_NOTE}},
-        'degraded': False, 'knowledge_version': cfg.kb['corpus']['version'], 'latency_ms': 0,
-    }
+    answer = ('当前检索的知识库（%s）里没有足够可靠的依据回答这个问题，我不做推测。'
+              '建议你确认具体事项，或通过学校官网/所属部门公布的渠道核实。' % _names(searchable))
+    if pending:
+        answer += ('\n（另外：你的身份还可以访问「%s」，但该知识库尚未接入检索，本次没有检索它。）'
+                   % _names(pending))
+    return _resp(base,
+                 behavior='refuse_noanswer', answer=answer,
+                 citations=[], confidence=round(confidence, 3), suggestions=[],
+                 boundary={'category': 'offline_required',
+                           'message': '本系统只提供已审核知识的查询，无法回答知识库外的问题。',
+                           'channel': {'unit': '', 'window': '', 'phone': '', 'service_hours': '',
+                                       'url': None, 'url_checked_at': None, 'note': CHANNEL_NOTE}},
+                 degraded=False, knowledge_version=_versions(searchable), latency_ms=0)
 
 
 def _trace(question):

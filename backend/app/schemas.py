@@ -9,6 +9,7 @@
 2. 每个回答必须带 citations；拒答时 citations 可以只有「办理途径」，
    但不能为空——需求文档 FR-21 要求兜底必须给出官方途径。
 3. 适用范围（校区/身份/学期）是请求参数而不是服务端猜的，对应 FR-16 的知识隔离。
+   身份先决定「能检索哪些知识库」，回答里必须能说清出自哪个知识库（knowledge_bases / kb）。
 
 依赖：pydantic v2 + fastapi（Anaconda 里已有 openai，通常已带 pydantic；待确认）。
 """
@@ -73,6 +74,25 @@ class AskRequest(BaseModel):
 
 # ---------------------------------------------------------------- 回答
 
+class CitationKB(BaseModel):
+    """引用的知识库：回答要能说清「出自哪个库、哪个版本」。"""
+    id: str = Field(..., description='知识库 ID，如 student-handbook')
+    name: str = Field(..., description='知识库名称，如 学生手册')
+    version: str = Field('', description='知识库版本，如 hb-2017-v1')
+    updated_at: str = Field('', description='知识库更新时间')
+    index_ready: bool = Field(False, description='该知识库是否已接入检索')
+
+
+class KnowledgeBaseBrief(BaseModel):
+    """本次请求实际检索的知识库（由身份路由得到，见 backend/app/libraries.py）。"""
+    id: str
+    name: str
+    version: str = ''
+    content_status: str = Field('ready', description='ready=内容已录入；pending=内容待补')
+    index_ready: bool = False
+    audience: List[str] = Field(default_factory=list, description='哪些身份可以访问')
+
+
 class Citation(BaseModel):
     """引用：必须能回溯到唯一某一条知识。"""
     chunk_id: str = Field(..., description='知识块 ID，如 hb-510')
@@ -84,6 +104,7 @@ class Citation(BaseModel):
     excerpt: str = Field('', max_length=300, description='用于高亮的原文片段')
     version: int = Field(1, description='知识版本号')
     updated_at: Optional[str] = Field(None, description='该条知识的更新时间')
+    kb: Optional[CitationKB] = Field(None, description='该引用所属的知识库')
 
 
 class OfficialChannel(BaseModel):
@@ -116,6 +137,12 @@ class AskResponse(BaseModel):
     boundary: Optional[BoundaryNotice] = Field(None, description='仅在边界类回答时返回')
     degraded: bool = Field(False, description='模型或检索不可用时降级（FR-02/NFR-02）')
     knowledge_version: str = Field('', description='本次回答依据的知识库版本')
+    knowledge_bases: List[KnowledgeBaseBrief] = Field(default_factory=list,
+                                                      description='本次实际检索的知识库（按身份路由）')
+    kb_pending: List[str] = Field(default_factory=list,
+                                  description='身份可访问、但尚未接入检索的知识库名称，回答里会声明没检索它')
+    kb_gap: bool = Field(False, description='为真表示该身份的知识库都没接入检索，客户端应改用本机知识')
+    kb_gap_reason: str = Field('', description='kb_gap 为真时的原因说明，可直接展示给用户')
     latency_ms: int = Field(0, description='服务端处理耗时')
 
 

@@ -3,6 +3,13 @@
   <view class="identity card"><view class="avatar">{{role.avatar}}</view><view class="identity-info"><view class="identity-name">{{role.name}}</view><view class="muted">{{role.description}}</view><text class="identity-badge">演示身份</text></view><button class="switch-role" bindtap="switchRole">切换 ⇄</button></view>
   <view class="note guest-note" wx:if="{{isGuest}}">游客只能访问公开知识：需登录身份或仅教师适用的条目不会出现在问答与指南里。匿名会话不写入本机历史，切换身份、点「新对话」或退出小程序后即失效。</view>
   <view class="stats-grid"><view><text class="stat-number">{{stats.knowledge}}</text><text class="stat-label">{{isGuest ? '可查公开知识' : '已发布知识'}}</text></view><view><text class="stat-number">{{stats.questions}}</text><text class="stat-label">{{isGuest ? '本次会话提问' : '本机提问'}}</text></view><view><text class="stat-number">{{stats.resolved}}</text><text class="stat-label">有帮助反馈</text></view></view>
+  <view class="section-head"><text class="section-title">知识库</text><text class="muted">{{role.name}}可查 {{libraries.length}} 个</text></view>
+  <view class="card lib-card" wx:for="{{libraries}}" wx:key="id">
+    <view class="lib-head"><text class="lib-name">{{item.name}}</text><text class="tag {{item.contentStatus === 'ready' ? '' : 'amber'}}">{{item.contentStatus === 'ready' ? (item.indexReady ? '已接入检索' : '本机演示') : '内容待补'}}</text><text class="tag {{item.visible ? '' : 'gray'}}">{{item.visible ? '可查' : '不可查'}}</text></view>
+    <view class="muted lib-summary">{{item.summary}}</view>
+    <view class="lib-meta"><text>版本 {{item.version || '—'}}</text><text>·</text><text>文档 {{item.documents.length}} 个</text><text>·</text><text>本机条目 {{item.localEntries}}</text></view>
+    <view class="lib-meta"><text>适用范围：{{item.scopeText}}</text></view>
+  </view>
   <view class="section-head"><text class="section-title">演示工作台</text><text class="tag gray">{{isGuest ? '需登录身份' : '仅本机数据'}}</text></view>
   <view class="menu card"><button class="menu-item" bindtap="openManage"><view><view>知识管理与审核</view><view class="muted">{{canManage ? '当前角色可进入工作台' : '切换维护或审核角色后进入'}}</view></view><text class="menu-right">{{pendingLabel}}</text></button><button class="menu-item" bindtap="about"><text>关于本次演示</text><text class="menu-right">↗</text></button><button class="menu-item danger" bindtap="reset"><text>恢复初始演示数据</text><text>↺</text></button></view>
   <block wx:if="{{!isGuest}}">

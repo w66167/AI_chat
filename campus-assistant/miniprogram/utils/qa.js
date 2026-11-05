@@ -52,9 +52,14 @@ function answer(question, knowledge, previousId, restricted) {
   }
   return noAnswer();
 }
+// hit() 把「知识来源」一起带出去：知识库（名称/版本）+ 文档 + 条号/页码。
+// 字段来自 store.getKnowledge() 的 decorate()，检索层不自己查表。
 function hit(item, contextual) {
   return { kind: 'answer', text: item.answer, knowledgeId: item.id, title: item.title, category: item.category,
-    source: item.source, version: item.version, updatedAt: item.updatedAt, scope: item.scope, channel: item.channel,
+    source: item.source, article: item.article || '', page: item.page || 0,
+    kbId: item.kbId || '', libraryName: item.libraryName || '', libraryVersion: item.libraryVersion || '',
+    libraryUpdatedAt: item.libraryUpdatedAt || '', libraryIndexReady: !!item.libraryIndexReady,
+    version: item.version, updatedAt: item.updatedAt, scope: item.scope, channel: item.channel,
     steps: item.steps, contextual, isDemo: true };
 }
 

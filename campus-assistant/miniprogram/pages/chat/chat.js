@@ -15,6 +15,8 @@ Page({
     roleName: '学生',
     roleId: 'student',
     isGuest: false,
+    kbNotice: '',
+    libraryNames: '',
     expanded: {},
     starters: ['宿舍几点熄灯？', '挂科了还能补考吗？', '转专业需要什么条件？']
   },
@@ -27,7 +29,9 @@ Page({
   checkOnline() {
     api.health().then((res) => {
       const ok = res.ok && res.data && res.data.model_loaded;
-      this.setData({ online: !!ok });
+      // 上一次回答因为「身份的知识库没接入检索」回退了本机知识时，保持本地徽标，
+      // 否则切个 tab 回来徽标又变「在线」，和刚刚那条回答的来源自相矛盾。
+      this.setData({ online: !!ok && !this.data.kbNotice });
     });
   },
   refresh() {
@@ -39,6 +43,8 @@ Page({
       roleName: current.name,
       roleId: current.id,
       isGuest: !current.history,
+      // 当前身份能查的知识库：游客只有公开指南，教师会多出教职工手册
+      libraryNames: store.librariesFor(current).map((item) => item.name).join(' / '),
       scrollTarget: messages.length ? 'msg-' + messages[messages.length - 1].id : ''
     });
   },
@@ -68,8 +74,15 @@ Page({
     const history = last && last.speaker === 'user' ? [{ question: last.text, answer: '', chunk_id: null }] : [];
 
     api.ask(question, history, current.identityType).then((res) => {
+      if (res.ok && res.data && res.data.kb_gap) {
+        // 当前身份对应的知识库还没接入在线检索服务（例如游客的「公开办事指南」）：
+        // 回退到本机已发布知识，并说明本次用的是哪个知识库，不拿别的库硬答。
+        this.setData({ online: false, kbNotice: res.data.kb_gap_reason || '当前身份对应的知识库尚未接入在线检索，本次改用本机已发布知识回答。' });
+        this.append(question, stamp, this.localAnswer(question, last));
+        return;
+      }
       if (res.ok) {
-        this.setData({ online: true });
+        this.setData({ online: true, kbNotice: '' });
         this.append(question, stamp, api.toMessage(res.data));
         return;
       }

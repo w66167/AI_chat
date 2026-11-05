@@ -1,6 +1,7 @@
 <view class="chat-shell">
   <view class="chat-top"><view><text class="assistant-name">校园知答</text><text class="assistant-status">{{online ? '学生手册在线检索' : '本地知识检索'}} · {{roleName}}</text></view><button class="new-chat" bindtap="clear">新对话 ＋</button></view>
-  <view class="identity-bar" wx:if="{{isGuest}}" bindtap="toMine"><text class="identity-tag">游客</text><text class="identity-text">当前是匿名会话，只保留本次对话；需登录身份的知识不返回。</text><text class="identity-link">切换身份 →</text></view>
+  <view class="scope-bar"><text class="scope-tag">{{roleName}}</text><text class="scope-text">可查知识库：{{libraryNames}}{{isGuest ? ' · 匿名会话，不保留历史' : ''}}</text><text class="scope-link" bindtap="toMine">切换 →</text></view>
+  <view class="kb-bar" wx:if="{{kbNotice}}"><text class="kb-tag">知识库</text><text class="kb-text">{{kbNotice}}</text></view>
   <scroll-view class="chat-scroll" scroll-y="{{true}}" scroll-into-view="{{scrollTarget}}" scroll-with-animation="{{true}}">
     <view class="chat-content">
       <view class="welcome" wx:if="{{!messages.length}}">
@@ -16,7 +17,7 @@
             <text class="answer-text" selectable="{{true}}">{{message.text}}</text>
             <view class="answer-steps" wx:if="{{message.steps.length}}"><view class="step" wx:for="{{message.steps}}" wx:key="index" wx:for-item="step"><text class="step-number">{{index + 1}}</text><text>{{step}}</text></view></view>
             <view class="channel" wx:if="{{message.channel}}"><text class="channel-label">{{message.kind === 'answer' ? '咨询途径' : '建议途径'}}</text><text>{{message.channel}}</text></view>
-            <button class="source-card" wx:if="{{message.source}}" data-id="{{message.knowledgeId}}" bindtap="openSource"><view class="source-title">资料来源 <text>{{message.knowledgeId ? '查看当前指南 ↗' : '已注明手册出处'}}</text></view><view>{{message.source}}</view><view class="source-meta">v{{message.version}} · {{message.updatedAt}} · {{message.scope}}</view></button>
+            <button class="source-card" wx:if="{{message.source || message.libraryName}}" data-id="{{message.knowledgeId}}" bindtap="openSource"><view class="source-title">知识来源 <text>{{message.knowledgeId ? '查看当前指南 ↗' : '手册 / 制度原文'}}</text></view><view class="source-kb" wx:if="{{message.libraryName}}">知识库：{{message.libraryName}}<text wx:if="{{message.libraryVersion}}"> · {{message.libraryVersion}}</text><text wx:if="{{message.libraryIndexReady}}"> · 已接入检索</text></view><view wx:if="{{message.source}}">文档：{{message.source}}</view><view wx:if="{{message.article || message.page}}">位置：{{message.article}}<text wx:if="{{message.page}}"> · 第 {{message.page}} 页</text></view><view class="source-meta">条目 v{{message.version}} · 更新 {{message.updatedAt}} · 适用范围：{{message.scope}}</view></button>
             <view class="answer-demo" wx:if="{{message.isDemo}}">以上为演示资料，实际办理请核实本校公告。</view>
           </view>
           <view class="suggestions" wx:if="{{message.suggestions.length}}"><button wx:for="{{message.suggestions}}" wx:key="*this" wx:for-item="suggestion" data-question="{{suggestion}}" bindtap="askSuggestion">{{suggestion}} ↗</button></view>

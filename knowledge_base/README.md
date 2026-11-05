@@ -12,10 +12,12 @@ knowledge_base/
     parse_handbook.py        PDF → 分页文本 → 文档/章/节/条切块（零第三方依赖）
     check_kb.py              校验问答条目的出处可定位、字段完整、页码一致
     export_miniprogram.py    导出小程序可直接 require 的 handbook.js
+    export_libraries.py      把 data/libraries.json 导出成小程序的知识库注册表（含 --check）
     build_eval_set.py        生成 150 条评测问题集（题目表可读可改）
     check_eval_set.py        校验问题集：命中目标存在、必含词在原文中、题型与期望匹配
     score_eval.py            打分：关键词基线自测，或对真实系统输出评分
   data/
+    libraries.json           知识库注册表：身份 → 可访问哪些知识库（唯一数据源）
     handbook_pages.json      206 页清洗后文本（含页脚页码）
     handbook_fulltext.txt    带页码标记的全文，供人工校对
     handbook_docs.json       28 篇文件清单：起止页、章数、条数、字数
@@ -24,6 +26,58 @@ knowledge_base/
     handbook.js              handbook_qa.json 的小程序版本
     eval_questions.json      150 条评测问题（含命中目标、期望行为、必含词）
 ```
+
+## 知识库注册表与身份路由
+
+`data/libraries.json` 是**知识库唯一的数据源**，后端和前端都从它派生：
+
+```text
+knowledge_base/data/libraries.json
+        ├─→ backend/app/libraries.py        后端按身份挑「能检索哪些知识库」
+        └─→ miniprogram/data/libraries.js   小程序按身份挑「能看哪些知识库、来源怎么标」
+            （由 scripts/export_libraries.py 生成，不要手改）
+```
+
+现在的三个知识库：
+
+| id | 名称 | 面向身份 | 内容状态 | 检索索引 |
+| --- | --- | --- | --- | --- |
+| `public-guide` | 校园公开办事指南 | 游客及所有登录身份 | ready（20 条本机演示条目） | 未接入 |
+| `student-handbook` | 学生手册 | 学生、教师、维护、审核 | ready（2017 版手册 586 块） | **已接入** |
+| `staff-handbook` | 教职工手册 | 教师、维护、审核 | **pending（内容待补）** | 未接入 |
+
+### 新增或补内容：五步
+
+1. 把语料做成切块文件，每行一个 JSON，字段与 `handbook_chunks.jsonl` 一致：
+
+   ```json
+   {"id":"sf-001","doc":"教职工请假规定","article":"第五条","source":"《教职工请假规定》第五条 · 第3页","text":"……","page_start":3,"page_end":3,"chapter":"考勤"}
+   ```
+
+   放到 `data/staff_chunks.jsonl`（文件名与注册表里的 `chunks_path` 一致即可）。
+2. 编辑 `data/libraries.json`：把该知识库的 `content_status` 改成 `ready`，
+   `documents` 补上真实文件名/版本/日期。
+3. 建索引（会把 `chunks_path` 指向的语料嵌入成向量）：
+
+   ```powershell
+   & $py scripts\build_index.py
+   ```
+
+   建完把注册表里的 `index_ready` 改成 `true`。**没建索引就写 `true` 会检索不到内容。**
+4. 重新生成小程序端注册表：
+
+   ```powershell
+   & $py scripts\export_libraries.py
+   ```
+5. 跑两侧的检查，确认没有不同步：
+
+   ```powershell
+   & $py scripts\export_libraries.py --check     # 后端与前端注册表是否一致
+   & $py ..\backend\tests\test_libraries.py      # 身份路由与出处标注
+   ```
+
+> `index_ready=false` 的知识库，后端**不会**拿别的库的内容冒充它：该身份若只有未接入的库，
+> 接口返回 `kb_gap=true`；若有接入的库，答案末尾会注明「某某知识库尚未接入检索，本次没有检索它」。
 
 ## 复现
 

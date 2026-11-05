@@ -170,12 +170,16 @@ class Handler(BaseHTTPRequestHandler):
 <style>body{font:14px/1.7 system-ui;margin:40px;max-width:760px}code{background:#f3f3f3;padding:2px 5px}
 pre{background:#f7f7f7;padding:12px;overflow:auto}</style>
 <h2>校园知答 API</h2>
-<p>基于《杭州电子科技大学学生手册》206 页 / 579 个检索单元的问答服务。</p>
+<p>基于《杭州电子科技大学学生手册》206 页 / 579 个检索单元的问答服务。
+请求里的 <code>scope.identity_type</code>（guest / student / teacher / staff）决定<b>能检索哪些知识库</b>。</p>
 <h3>GET /v1/health</h3><pre>curl http://127.0.0.1:8000/v1/health</pre>
 <h3>POST /v1/ask</h3>
 <pre>curl -X POST http://127.0.0.1:8000/v1/ask -H "Content-Type: application/json" \\
-  -d "{\\"question\\": \\"宿舍几点熄灯\\"}"</pre>
+  -d "{\\"question\\": \\"宿舍几点熄灯\\", \\"scope\\": {\\"identity_type\\": \\"student\\"}}"</pre>
 <p>返回 <code>behavior</code> 五档之一：answer / answer_with_caveat / clarify / refuse_noanswer / refuse_boundary。</p>
+<p><code>knowledge_bases</code> 说明本次实际检索了哪些知识库，每条 <code>citations[].kb</code> 说明该引用出自哪个库；
+<code>kb_pending</code> 列出该身份还能访问、但尚未接入检索的知识库；<code>kb_gap=true</code> 表示一个能检索的库都没有，
+客户端应改用本机知识（响应里的 <code>kb_gap_reason</code> 可直接展示）。</p>
 <h3>POST /v1/feedback</h3>
 <pre>curl -X POST http://127.0.0.1:8000/v1/feedback -H "Content-Type: application/json" \\
   -d "{\\"session_id\\":\\"x\\",\\"message_id\\":\\"m1\\",\\"resolved\\":true,\\"score\\":5}"</pre>

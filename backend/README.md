@@ -1,7 +1,7 @@
 # 后端 API（可用）
 
 基于《杭州电子科技大学学生手册》的问答服务。检索层复用 `knowledge_base/kb/`，后端只做
-「策略判断 + 契约包装 + 会话/反馈」。
+「**按身份选知识库** + 策略判断 + 契约包装 + 会话/反馈」。
 
 ## 启动
 
@@ -16,19 +16,46 @@ cd "D:\校园智能问答系统\AI_chat\backend"
 - 接口说明：<http://127.0.0.1:8000/docs>
 - 健康检查：<http://127.0.0.1:8000/v1/health>
 - 冒烟测试：`& $py tests\smoke_api.py`（服务需先启动）
+- 路由与出处测试：`& $py tests\test_libraries.py`（**不需要模型和 GPU**，随时可跑）
 
 ## 接口
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/v1/health` | 状态、模型、索引指纹、语料版本 |
-| POST | `/v1/ask` | 问答，返回行为、答案、引用、置信度、推荐问法 |
+| POST | `/v1/ask` | 问答，返回行为、答案、引用、置信度、推荐问法、**本次检索的知识库** |
 | POST | `/v1/feedback` | 反馈，追加写入 `data/feedback.jsonl` |
 | GET | `/docs` | 接口说明页 |
 
+请求里的 `scope.identity_type`（`guest` / `student` / `teacher` / `staff`）决定**能检索哪些知识库**；
+响应里 `knowledge_bases` 说明本次实际检索了哪些库，每条 `citations[].kb` 说明该引用出自哪个库。
+
 ```powershell
-curl.exe -s -X POST http://127.0.0.1:8000/v1/ask -H "Content-Type: application/json" -d "{\"question\":\"宿舍几点熄灯\"}"
+curl.exe -s -X POST http://127.0.0.1:8000/v1/ask -H "Content-Type: application/json" -d "{\"question\":\"宿舍几点熄灯\",\"scope\":{\"identity_type\":\"student\"}}"
 ```
+
+## 按身份路由到知识库（FR-16）
+
+注册表在 `knowledge_base/data/libraries.json`，`app/libraries.py` 读它并做两件事：
+身份 → 能访问哪些库（`audience` 反查）、知识块 → 属于哪个库（按各库的 `chunks_path` 反查）。
+小程序端显示的是同一份注册表生成的 `miniprogram/data/libraries.js`，两边不会各说各话。
+
+| 身份 | 可访问知识库 | 本次能检索的 |
+| --- | --- | --- |
+| 游客 `guest` | 校园公开办事指南 | 无（该库未接入检索） |
+| 学生 `student` | 公开指南、学生手册 | 学生手册 |
+| 教师/行政 `teacher` | 公开指南、学生手册、教职工手册 | 学生手册 |
+| 维护/审核 `staff` | 全部三个 | 学生手册 |
+
+两种「查不到」要分清楚，而且都不能拿别的库冒充：
+
+- `kb_gap: true`：该身份的知识库**一个都没接入检索**（游客就是这个情况）。客户端据此改用本机知识，
+  响应里的 `kb_gap_reason` 可直接展示给用户。
+- `kb_pending: ["教职工手册"]`：本次检索了学生手册，但该身份还能访问的知识库还没建索引，
+  答案末尾会附一句「这份知识库尚未接入检索，本次没有检索它」。
+
+检索是**先取候选、再按允许的知识库过滤、最后取 top_k**（`answer.respond` 第 ⑤ 步）。
+反过来做会让范围外的块白占 top_k 名额，表现为「明明有权限却查不到」。
 
 ## 实测行为（六类各一例）
 
@@ -49,11 +76,12 @@ curl.exe -s -X POST http://127.0.0.1:8000/v1/ask -H "Content-Type: application/j
 
 ```text
 ① 越界规则（正则）  → refuse_boundary，不检索
-② 只有话题词        → clarify + 推荐问法
-③ 检索（hybrid+rerank）
-④ 置信度 < 0.42     → refuse_noanswer
-⑤ 置信度 < 0.55 或前两名差 < 0.02 → clarify
-⑥ 其余              → answer（条文原文 + 出处）
+② 身份 → 可检索知识库（无则 kb_gap，客户端改用本机知识）
+③ 只有话题词        → clarify + 推荐问法
+④ 检索（hybrid+rerank）→ 按允许的知识库过滤 → top_k
+⑤ 置信度 < 0.35     → refuse_noanswer（点名实际检索了哪些库）
+⑥ 置信度 < 0.40     → clarify
+⑦ 其余              → answer（条文原文 + 出处 + 所属知识库）
 ```
 
 阈值在 `backend/config.json` 的 `answer_policy` 里，可调不用改代码。
@@ -80,10 +108,12 @@ backend/
     schemas.py          请求/响应字段定义（pydantic）
     config.py           合并知识库配置与后端阈值
     deps.py             检索器单例（懒加载，避免每请求重建模型）
+    libraries.py        知识库注册表：身份 → 可检索哪些库，知识块 → 属于哪个库
     session.py          会话（内存，轮数上限 + 空闲过期）
-    answer.py           策略层：越界/澄清/拒答/作答 + 模板回答
+    answer.py           策略层：身份路由 + 越界/澄清/拒答/作答 + 模板回答
     server.py           HTTP 路由
-  tests/smoke_api.py    六类行为冒烟
+  tests/smoke_api.py    六类行为冒烟（需要服务与模型）
+  tests/test_libraries.py     知识库路由与出处标注（不需要模型）
   tests/eval_policy.py  用 150 条评测集给策略层打分
   tests/smoke_miniprogram.js  小程序字段映射的契约测试（Node 模拟 wx.request）
 ```
@@ -134,6 +164,9 @@ backend/
 ## 还没做
 
 - **生成层**：现在是「条文原文 + 出处」模板回答，能过「有出处、不编造」，但语言生硬。接 7B 后仍需保留本路径做降级。
-- **多轮槽位补全**：现在只把上一轮问题拼进检索查询，校区/身份/学期这些槽位还没做抽取。
-- **鉴权**：无。演示用；上线前要接统一身份认证（FR-02）。
+- **多轮槽位补全**：现在只把上一轮问题拼进检索查询，校区/学期这些槽位还没做抽取（身份已经用来路由知识库）。
+- **鉴权**：没有真实认证。`scope.identity_type` 由客户端上报、服务端据此选库，**客户端可以谎报身份**；
+  真上线要接统一身份认证（FR-02），由服务端从凭据推导身份，而不是读请求参数。
+- **知识库覆盖**：注册表里三个库，只有「学生手册」接了索引；「教职工手册」内容还空着，
+  「校园公开办事指南」只有小程序本机演示条目。补内容的步骤见 `knowledge_base/README.md`。
 - **限流与并发**：`ThreadingHTTPServer` 无连接数限制，GPU 单卡吞吐约 1.6 QPS，并发上来会排队。

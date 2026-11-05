@@ -82,6 +82,40 @@ assert.deepEqual(store.roles.map((item) => item.id), ['guest', 'student', 'teach
 assert.deepEqual(store.roles.map((item) => item.identityType), ['guest', 'student', 'teacher', 'staff', 'staff']);
 assert.equal(store.roles.filter((item) => item.workbench).map((item) => item.id).join(','), 'maintainer,reviewer');
 
+// ---- 知识库注册表：后端与小程序共用 knowledge_base/data/libraries.json
+const registry = require('../miniprogram/data/libraries');
+assert.equal(registry.meta.source, 'knowledge_base/data/libraries.json');
+assert.deepEqual(registry.libraries.map((item) => item.id), ['public-guide', 'student-handbook', 'staff-handbook']);
+assert.deepEqual(registry.libraries.map((item) => item.audience.length), [4, 3, 2]);
+assert.equal(registry.libraries.filter((item) => item.index_ready).map((item) => item.id).join(','), 'student-handbook');
+assert.equal(registry.libraries.filter((item) => item.content_status === 'pending').map((item) => item.id).join(','), 'staff-handbook');
+assert.deepEqual(store.librariesFor(store.roleById('guest')).map((item) => item.id), ['public-guide']);
+assert.deepEqual(store.librariesFor(store.roleById('student')).map((item) => item.id), ['public-guide', 'student-handbook']);
+assert.deepEqual(store.librariesFor(store.roleById('teacher')).map((item) => item.id), ['public-guide', 'student-handbook', 'staff-handbook']);
+assert.deepEqual(store.librariesFor(store.roleById('maintainer')).map((item) => item.id), ['public-guide', 'student-handbook', 'staff-handbook']);
+// 知识条目归属知识库，适用范围文字也只写在知识库那一处
+const publicItem = store.getItem('card-loss');
+assert.equal(publicItem.kbId, 'public-guide');
+assert.equal(publicItem.libraryName, '校园公开办事指南');
+assert.equal(publicItem.scope, registry.libraries[0].scope_text);
+assert.equal(store.getItem('student-card-reissue').kbId, 'student-handbook');
+// staff-proof 只有教师及以上能看到，这里直接读原始数据校验归属
+assert.equal(store.read().knowledge.find((item) => item.id === 'staff-proof').kbId, 'staff-handbook');
+// 回答必须带知识来源：知识库（名称/版本）+ 文档 + 条号/页码
+const sourced = qa.answer('校园卡丢了怎么办？', store.getKnowledge());
+assert.equal(sourced.kind, 'answer');
+assert.equal(sourced.libraryName, '校园公开办事指南');
+assert.equal(sourced.libraryVersion, 'demo-2026.10');
+assert.equal(sourced.source, '课题演示资料 · 校园卡办事指南');
+assert.equal(sourced.article, '');
+assert.equal(sourced.page, 0);
+// 「我的」页的知识库清单：能看到哪些、建设到哪一步
+const listed = store.getLibraries();
+assert.equal(listed.length, 3);
+assert.deepEqual(listed.filter((item) => item.visible).map((item) => item.id), ['public-guide', 'student-handbook']);
+assert.equal(listed.find((item) => item.id === 'staff-handbook').contentStatus, 'pending');
+assert.equal(listed.find((item) => item.id === 'public-guide').localEntries, 20);
+
 store.setRole('guest');
 assert.equal(store.role().name, '游客');
 assert.equal(store.getKnowledge().length, 20);          // 游客只拿到公开知识
@@ -143,9 +177,11 @@ assert.throws(() => store.reviewDraft('draft-canteen', true), /待审核/);
 
 store.setRole('maintainer');
 const original = store.getItem('library-hours');
+// 修订时可以不传 kbId，沿用原条目所属的知识库
 const draft = store.saveDraft({ targetId: original.id, title: original.title, category: original.category,
   aliases: original.aliases.join('，'), answer: '演示新安排：周末 10:00—20:00。', steps: original.steps.join('\n'),
   channel: original.channel, source: original.source, scope: original.scope });
+assert.equal(draft.kbId, original.kbId);
 assert.throws(() => store.saveDraft({ targetId: original.id, title: original.title, category: original.category, answer: '重复草稿', source: original.source, channel: original.channel, scope: original.scope }), /已有修订/);
 assert.equal(store.getItem(original.id).answer, original.answer);
 store.submitDraft(draft.id);
@@ -162,18 +198,20 @@ assert.match(store.getItem(original.id).answer, /10:00/);
 assert.equal(store.read().audit.filter((entry) => entry.action.startsWith('审核发布')).length, 2);
 console.log('PASS 角色限制、审核前后生效、重复草稿保护、退回重提、修订版本与操作记录');
 
-// 维护人员指定「仅教师/行政人员」范围 → 审核发布后按身份可见（FR-16）
+// 维护人员把新知识挂到「教职工手册」知识库 → 审核发布后按知识库的身份范围可见（FR-16）
 store.setRole('maintainer');
-assert.throws(() => store.saveDraft({ title: '范围校验', category: '后勤', answer: 'a', source: 's', channel: 'c', scope: 'x', audienceKey: 'nobody' }), /身份适用范围/);
+assert.throws(() => store.saveDraft({ title: '知识库校验', category: '后勤', answer: 'a', source: 's', channel: 'c', scope: 'x', kbId: 'not-a-kb' }), /知识库/);
 const scoped = store.saveDraft({ title: '教职工体检预约（演示）', category: '后勤', answer: '演示答案：体检预约请以人事部门通知为准。',
-  source: '课题演示资料 · 人事通知', channel: '人事部门服务窗口（演示）', scope: store.SCOPE_TEXT.teacher, audienceKey: 'teacher' });
+  source: '课题演示资料 · 人事通知', channel: '人事部门服务窗口（演示）', scope: '演示校区 · 在职教职工', kbId: 'staff-handbook' });
 store.submitDraft(scoped.id);
 store.setRole('reviewer');
 store.reviewDraft(scoped.id, true);
 // 新知识发布时会生成新的知识 ID（草稿 ID 不复用），按标题找回发布后的条目。
 const publishedScoped = store.getKnowledge().find((item) => item.title === '教职工体检预约（演示）');
 assert.ok(publishedScoped, '新知识发布后应能查到');
+assert.equal(publishedScoped.kbId, 'staff-handbook');
 assert.equal(publishedScoped.audience.join(','), 'teacher,staff');
+assert.equal(publishedScoped.libraryName, '教职工手册');
 store.setRole('student');
 assert.ok(!store.getKnowledge().some((item) => item.id === publishedScoped.id));
 store.setRole('guest');
@@ -181,7 +219,7 @@ assert.ok(!store.getKnowledge().some((item) => item.id === publishedScoped.id));
 store.setRole('teacher');
 assert.ok(store.getKnowledge().some((item) => item.id === publishedScoped.id));
 store.setRole('reviewer');
-console.log('PASS 身份适用范围随草稿下发：仅教师可见的知识对学生与游客不可见');
+console.log('PASS 知识条目的可见性由所属知识库决定：挂到教职工手册后学生与游客都查不到');
 
 store.appendMessages([{ id: 'question', speaker: 'user', text: '图书馆什么时候开放？' }, Object.assign({ id: 'answer', speaker: 'assistant', question: original.title }, qa.answer(original.title, [original]))]);
 store.setFeedback('answer', 'resolved'); store.setFeedback('answer', 'unresolved');
