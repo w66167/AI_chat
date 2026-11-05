@@ -20,6 +20,9 @@ const seed = require('../miniprogram/data/knowledge');
 const registry = require('../miniprogram/data/libraries');
 const app = JSON.parse(fs.readFileSync(path.join(mini, 'app.json'), 'utf8'));
 const project = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'));
+const handbookFile = path.join(mini, 'data', 'handbook_local.js');
+assert.ok(fs.existsSync(handbookFile), '缺少本地学生手册数据，请先运行 scripts/build-handbook-local.js');
+const handbookLocal = require(handbookFile);
 
 function readSource(rel) { return fs.readFileSync(path.join(mini, rel), 'utf8'); }
 
@@ -59,6 +62,7 @@ const chatCode = readSource(path.join('pages', 'chat', 'chat.js'));
 if (/api\.ask\s*\(/.test(chatCode)) {
   assert.ok(/qa\.answer\s*\(/.test(chatCode), '在线模式必须保留本地回退（qa.answer）');
 }
+assert.ok(/handbook_local/.test(chatCode), '聊天页必须加载本地学生手册数据');
 // FR-16：身份必须随请求上报，服务端才能按身份选知识库（默认游客）。
 assert.ok(/identity_type/.test(readSource(path.join('utils', 'api.js'))), 'utils/api.js 必须把身份作为 scope.identity_type 上报');
 console.log('PASS 项目入口、五个页面文件、JSON 与 JavaScript 语法；联网仅限 utils/api.js，且聊天页保留离线回退');
@@ -117,6 +121,29 @@ for (const q of ['月球上可以种什么花？', '图书馆能吃火锅吗？'
   assert.equal(qa.answer(q, store.getKnowledge()).kind, 'fallback', q);
 }
 console.log('PASS 20 条公开知识的标题与全部同义问法、追问、澄清、无答案与答复边界');
+
+// ---- 学生手册本地检索：人工问答优先，未命中时检索 586 条正文块
+assert.equal(handbookLocal.entries.length, 30);
+assert.equal(handbookLocal.chunks.length, 586);
+assert.equal(handbookLocal.meta.kbId, 'student-handbook');
+const handbookDorm = qa.answer('宿舍几点熄灯？', store.getKnowledge(), null, null, handbookLocal);
+assert.equal(handbookDorm.kind, 'answer');
+assert.equal(handbookDorm.handbookChunkId, 'hb-510');
+assert.equal(handbookDorm.article, '第二十二条');
+assert.equal(handbookDorm.page, 174);
+const handbookMakeup = qa.answer('补考多少分及格？', store.getKnowledge(), null, null, handbookLocal);
+assert.equal(handbookMakeup.kind, 'answer');
+assert.equal(handbookMakeup.handbookChunkId, 'hb-141');
+assert.equal(handbookMakeup.article, '第二十一条');
+assert.equal(handbookMakeup.page, 42);
+const handbookDiploma = qa.answer('毕业证书遗失怎么办？', store.getKnowledge(), null, null, handbookLocal);
+assert.equal(handbookDiploma.kind, 'answer');
+assert.equal(handbookDiploma.handbookChunkId, 'hb-039');
+assert.equal(handbookDiploma.article, '第三十八条');
+assert.equal(handbookDiploma.page, 13);
+assert.equal(qa.answer('校园卡丢了怎么办？', store.getKnowledge(), null, null, handbookLocal).knowledgeId, 'card-loss');
+assert.equal(qa.answer('宿舍几点熄灯？', store.getKnowledge(), null, null, null).kind, 'fallback');
+console.log('PASS 学生手册本地检索：30 条问答、586 条正文、公开知识优先级与游客隔离');
 
 // ---- 知识条目归属知识库，可见性由知识库身份范围决定
 const publicItem = store.getItem('card-loss');
