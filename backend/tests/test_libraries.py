@@ -25,6 +25,8 @@ from kb.corpus import load_chunks                      # noqa: E402
 KB_DIR = os.path.join(ROOT, 'knowledge_base')
 CHUNKS_PATH = os.path.join(KB_DIR, 'data', 'handbook_chunks.jsonl')
 MINI_LIBRARIES = os.path.join(ROOT, 'campus-assistant', 'miniprogram', 'data', 'libraries.js')
+MINI_APP_JSON = os.path.join(ROOT, 'campus-assistant', 'miniprogram', 'app.json')
+MINI_STORE = os.path.join(ROOT, 'campus-assistant', 'miniprogram', 'utils', 'store.js')
 
 
 class FakeRetriever:
@@ -65,6 +67,34 @@ def test_registry_matches_miniprogram():
             '知识库 %s 的身份范围没有同步到小程序端' % item['id']
     for item in libraries.registry()['identities']:
         assert '"id": "%s"' % item['id'] in js, '小程序端缺少身份 %s' % item['id']
+
+
+def test_user_app_has_no_admin_roles():
+    """用户端小程序只保留使用者身份；管理端角色留在注册表里但不进小程序。
+
+    「知识维护人员 / 知识审核员」是对系统负责而不是使用系统的角色，
+    它们的能力由 knowledge_base/scripts/kb_admin.py 承接，所以：
+      注册表里要留着（后端按 identity_type='staff' 路由要能对上），
+      小程序的角色清单里不能有（否则又变成客户端切角色就能维护知识）。
+    """
+    identities = libraries.registry()['identities']
+    app_ids = [i['id'] for i in identities if i.get('app') is True]
+    admin_ids = [i['id'] for i in identities if i.get('app') is False]
+    assert app_ids == ['guest', 'student', 'teacher'], app_ids
+    assert admin_ids == ['maintainer', 'reviewer'], admin_ids
+    # staff 仍出现在知识库范围里，后端路由与 kb_admin 都依赖它
+    assert 'staff' in libraries.library('staff-handbook')['audience']
+
+    with open(MINI_STORE, encoding='utf-8') as f:
+        store_js = f.read()
+    assert 'item.app === true' in store_js, '小程序应只加载 app === true 的身份'
+    for role_id in admin_ids:
+        assert "'%s'" % role_id not in store_js, '用户端不应写死管理端角色 id：%s' % role_id
+
+    import re
+    with open(MINI_APP_JSON, encoding='utf-8') as f:
+        pages = json.load(f)['pages']
+    assert not any(re.search(r'manage', page) for page in pages), pages
 
 
 def test_identity_routing():

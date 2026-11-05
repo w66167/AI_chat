@@ -8,3 +8,9 @@ data/bench_results.json
 
 # 临时目录：日志、pip 缓存、基础库安装包（曾累计 53 MB）
 .tmp/
+
+# 管理端运行数据（kb_admin.py 的草稿、已发布集合与审计日志）：属于运行产物，不进版本库。
+# 想从零演示审核流程时，直接删掉这三个文件即可。
+data/kb_drafts.json
+data/kb_published.json
+data/kb_audit.jsonl

@@ -13,6 +13,7 @@ knowledge_base/
     check_kb.py              校验问答条目的出处可定位、字段完整、页码一致
     export_miniprogram.py    导出小程序可直接 require 的 handbook.js
     export_libraries.py      把 data/libraries.json 导出成小程序的知识库注册表（含 --check）
+    kb_admin.py              管理端：知识维护/审核/发布（维护人员与审核员，含 --selftest）
     build_eval_set.py        生成 150 条评测问题集（题目表可读可改）
     check_eval_set.py        校验问题集：命中目标存在、必含词在原文中、题型与期望匹配
     score_eval.py            打分：关键词基线自测，或对真实系统输出评分
@@ -78,6 +79,43 @@ knowledge_base/data/libraries.json
 
 > `index_ready=false` 的知识库，后端**不会**拿别的库的内容冒充它：该身份若只有未接入的库，
 > 接口返回 `kb_gap=true`；若有接入的库，答案末尾会注明「某某知识库尚未接入检索，本次没有检索它」。
+
+## 管理端：知识维护与审核
+
+「知识维护人员 / 知识审核员」是对系统负责而不是使用系统的角色，**不在用户端小程序里**
+（用户端只有游客、学生、教师三种使用者身份）。它们的职责由 `scripts/kb_admin.py` 承担：
+
+```powershell
+python scripts\kb_admin.py selftest        # 一次跑完全部规则，纯内存，不改 data/
+
+python scripts\kb_admin.py draft  --actor maintainer --kb public-guide --category 后勤 \
+    --title "食堂遗失物品怎么找回？" --answer "……" --source "课题演示资料 · 后勤办事指南" \
+    --channel "食堂服务台" --scope "演示校区 · 全体师生" --long-term
+python scripts\kb_admin.py submit --actor maintainer --id draft-xxx
+python scripts\kb_admin.py review --actor reviewer   --id draft-xxx --reject --reason "请补充办理步骤"
+python scripts\kb_admin.py review --actor reviewer   --id draft-xxx --approve
+python scripts\kb_admin.py list --published
+python scripts\kb_admin.py log --limit 10
+```
+
+实现的是需求文档 2.3 节与 FR-25/26/27/34 的规则：
+
+| 规则 | 在工具里的体现 |
+| --- | --- |
+| 必填字段、时间区间校验（FR-26） | 缺字段 / 失效早于生效 / 长期有效没显式标记，一律拒绝 |
+| 已提交版本冻结（FR-25） | 状态为 `pending` 的草稿不能直接改写，只能复制为新草稿 |
+| 驳回后回到可修改（2.3 节） | 状态 `rejected` 的草稿可以继续编辑，改完重新提交 |
+| 禁止作者自审（2.1 职责分离） | `review --actor` 与草稿作者相同直接被拒 |
+| 驳回必须给原因（FR-27） | 不填 `--reason` 直接失败 |
+| 版本递增、不覆盖（2.3 节） | 修订发布后 `version + 1`，旧版本被替换但审计里留痕 |
+| 乐观锁（2.5 节） | 提交后原知识版本被别人改过，发布会报版本冲突 |
+| 审计只追加（FR-34） | 每条记录操作主体 / 动作 / 对象 / 时间 / 结果 / 原因 |
+
+运行数据落在 `data/kb_drafts.json`、`data/kb_published.json`、`data/kb_audit.jsonl`，
+已加进 `.gitignore`；想从零演示审核流程，删掉这三个文件即可。
+
+> **还没做**：发布结果没有自动导出成用户端的 `campus-assistant/miniprogram/data/knowledge.js`。
+> 现在小程序里那 22 条是随包发布的「已发布集合」，管理端改完知识还需要一步导出才能体现在小程序里。
 
 ## 复现
 

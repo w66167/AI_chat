@@ -4,8 +4,7 @@
     "pages/chat/chat",
     "pages/services/services",
     "pages/mine/mine",
-    "pages/detail/detail",
-    "pages/manage/manage"
+    "pages/detail/detail"
   ],
   "window": {
     "navigationBarTitleText": "校园知答",
