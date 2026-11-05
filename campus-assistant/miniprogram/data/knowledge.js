@@ -44,15 +44,7 @@ const knowledge = definitions.map((d) => {
   };
 });
 
-const sampleDraft = {
-  id: 'draft-canteen', targetId: '', title: '食堂遗失物品怎么找回？', category: '后勤',
-  aliases: ['食堂丢东西', '食堂失物招领', '食堂遗失物品'],
-  answer: '可先向食堂服务台询问失物招领情况，再按学校公布的失物招领途径查找。请勿在公开留言中发布证件号码。',
-  steps: ['回忆遗失时间和大致位置。', '向食堂服务台询问并描述物品特征。', '领取时按现场要求核验。'],
-  channel: '食堂服务台', source: '课题演示资料 · 后勤办事指南', scope: '演示校区 · 全体师生',
-  kbId: 'public-guide', article: '', page: 0,
-  status: 'pending', author: 'maintainer', authorName: '知识维护人员', baseVersion: 0,
-  updatedAt: '2026-10-15', isDemo: true, reason: ''
-};
+// 用户端只带「已发布」的演示知识。待审核草稿、审核记录属于管理端数据，
+// 由 knowledge_base/scripts/kb_admin.py 维护，不打包进小程序。
 
-module.exports = { knowledge, categories, sampleDraft, DEFAULT_KB };
+module.exports = { knowledge, categories, DEFAULT_KB };

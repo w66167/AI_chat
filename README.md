@@ -198,21 +198,25 @@ curl.exe -s -X POST http://127.0.0.1:8000/v1/ask -H "Content-Type: application/j
 
 首页右上角应显示「**● 在线**」。如果显示「本地」，说明没连上后端——小程序会自动回退到本机示例知识（按身份 20 / 21 / 22 条），页面不会白屏。
 
-小程序里可以在「我的」切换五个演示身份（游客 / 学生 / 教师、行政人员 / 知识维护人员 / 知识审核员）。
+小程序里可以在「我的」切换三种**使用者**身份（游客 / 学生 / 教师、行政人员）。
 **每个身份有自己的知识库**：游客＝校园公开办事指南，学生＝＋学生手册，教师＝＋教职工手册；
 后端的 `/v1/ask` 按 `scope.identity_type` 选库检索，回答里标注「知识库 · 文档 · 条号/页码」。
 知识库注册表在 `knowledge_base/data/libraries.json`，三个库里只有学生手册有真实语料，教职工手册内容待补。
-细节见 [campus-assistant/README.md](campus-assistant/README.md#身份与知识库v04)。
+
+**知识维护人员与知识审核员不在小程序里**（它们是对系统负责而不是使用系统的角色），
+职责由管理端工具 `knowledge_base/scripts/kb_admin.py` 承担：起草 → 提交 → 驳回/发布 + 审计，
+含「禁止作者自审」与版本递增。细节见 [campus-assistant/README.md](campus-assistant/README.md#身份与知识库v05)。
 
 改完代码想先做静态检查，不打开工具也行：
 
 ```powershell
 cd campus-assistant
-node scripts/check.js          # 语法、BOM、联网规则、离线回退、身份与知识库路由
+node scripts/check.js          # 语法、BOM、联网规则、离线回退、身份与知识库路由、用户端无管理接口
 python scripts/check-wxml.py   # WXML 标签闭合（可选）
 
 cd ..\knowledge_base
 python scripts\export_libraries.py --check    # 注册表前后端是否同步
+python scripts\kb_admin.py selftest           # 管理端知识维护/审核规则（纯内存，不需要模型）
 python ..\backend\tests\test_libraries.py     # 后端按身份选库与出处标注（不需要模型）
 ```
 

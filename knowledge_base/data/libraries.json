@@ -1,12 +1,13 @@
 {
   "version": 1,
   "_note": "知识库注册表（唯一数据源）。身份→知识库的映射由每个知识库的 audience 推导。改完这个文件要跑 `python knowledge_base/scripts/export_libraries.py` 重新生成小程序端的 miniprogram/data/libraries.js，否则后端测试会报不同步。",
+  "_identity_note": "app=true 的身份出现在用户端小程序；app=false 是管理端角色（知识维护人员 / 知识审核员），它们对系统负责而不是使用系统，因此只在知识维护流程（knowledge_base/scripts/kb_admin.py）里出现，不进用户端的身份切换。audience 里的 staff 覆盖这两个管理端角色。",
   "identities": [
-    { "id": "guest", "name": "游客", "identity_type": "guest", "avatar": "客", "workbench": false, "history": false, "description": "公开问答、指南与当前会话反馈；不提供跨会话个人历史" },
-    { "id": "student", "name": "学生", "identity_type": "student", "avatar": "学", "workbench": false, "history": true, "description": "适用知识问答、本人历史与反馈" },
-    { "id": "teacher", "name": "教师/行政人员", "identity_type": "teacher", "avatar": "师", "workbench": false, "history": true, "description": "问答权限同学生，另可访问教职工、行政人员适用知识" },
-    { "id": "maintainer", "name": "知识维护人员", "identity_type": "staff", "avatar": "维", "workbench": true, "history": true, "description": "起草、修订、提交审核并维护官方途径" },
-    { "id": "reviewer", "name": "知识审核员", "identity_type": "staff", "avatar": "审", "workbench": true, "history": true, "description": "审核、驳回并发布知识" }
+    { "id": "guest", "name": "游客", "identity_type": "guest", "app": true, "avatar": "客", "history": false, "description": "公开问答、指南与当前会话反馈；不提供跨会话个人历史" },
+    { "id": "student", "name": "学生", "identity_type": "student", "app": true, "avatar": "学", "history": true, "description": "适用知识问答、本人历史与反馈" },
+    { "id": "teacher", "name": "教师/行政人员", "identity_type": "teacher", "app": true, "avatar": "师", "history": true, "description": "问答权限同学生，另可访问教职工、行政人员适用知识" },
+    { "id": "maintainer", "name": "知识维护人员", "identity_type": "staff", "app": false, "avatar": "维", "history": true, "description": "起草、修订、提交审核并维护官方途径（管理端角色）" },
+    { "id": "reviewer", "name": "知识审核员", "identity_type": "staff", "app": false, "avatar": "审", "history": true, "description": "审核、驳回并发布知识（管理端角色）" }
   ],
   "libraries": [
     {
