@@ -48,11 +48,14 @@ function request(path, method, data) {
 
 function health() { return request('/v1/health', 'GET'); }
 
-function ask(question, history) {
+function ask(question, history, identityType) {
+  // FR-16：身份适用范围由客户端显式上报（guest / student / teacher / staff），
+  // 服务端按此过滤知识；缺省按游客处理，宁可少答也不越权。
   return request('/v1/ask', 'POST', {
     question: question,
     session_id: sessionId(),
     channel: 'miniprogram',
+    scope: { identity_type: identityType || 'guest' },
     history: history || []
   });
 }

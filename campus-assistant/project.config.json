@@ -2,7 +2,7 @@
   "description": "校园知答 · 课题展示小程序",
   "miniprogramRoot": "miniprogram/",
   "compileType": "miniprogram",
-  "appid": "wxc8abaf65ff80a11d",
+  "appid": "touristappid",
   "projectname": "campus-assistant-demo",
   "setting": {
     "es6": true,
@@ -35,5 +35,6 @@
     "ignore": [],
     "include": []
   },
-  "editorSetting": {}
+  "editorSetting": {},
+  "libVersion": "3.17.4"
 }
