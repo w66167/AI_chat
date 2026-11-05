@@ -12,7 +12,9 @@
     <text class="field-label">办理步骤（每行一步）</text><textarea class="field" value="{{form.steps}}" data-field="steps" bindinput="updateField" placeholder="第一步…&#10;第二步…" maxlength="1000"/>
     <text class="field-label">咨询途径 *</text><input class="field" value="{{form.channel}}" data-field="channel" bindinput="updateField" placeholder="例如：食堂服务台（演示）" maxlength="100"/>
     <text class="field-label">资料来源 *</text><input class="field" value="{{form.source}}" data-field="source" bindinput="updateField" maxlength="100"/>
-    <text class="field-label">适用范围 *</text><input class="field" value="{{form.scope}}" data-field="scope" bindinput="updateField" maxlength="100"/>
+    <text class="field-label">适用范围（展示文字）*</text><input class="field" value="{{form.scope}}" data-field="scope" bindinput="updateField" maxlength="100"/>
+    <text class="field-label">身份适用范围（权限）*</text><picker range="{{audienceLabels}}" value="{{audienceIndex}}" bindchange="audienceChange"><view class="field picker-field">{{audienceLabels[audienceIndex]}} <text>选择范围 ↓</text></view></picker>
+    <view class="muted">选中范围后上面的展示文字会自动同步，游客与不符合身份的账号查不到该条目。</view>
     <view class="actions"><button class="outline" bindtap="cancel">取消编辑</button><button class="primary" bindtap="save">保存草稿</button></view>
   </view>
   <view class="tabs"><button class="tab {{tab === 'pending' ? 'active' : ''}}" data-tab="pending" bindtap="changeTab">待审核</button><button class="tab {{tab === 'draft' ? 'active' : ''}}" data-tab="draft" bindtap="changeTab">草稿 / 退回</button><button class="tab {{tab === 'published' ? 'active' : ''}}" data-tab="published" bindtap="changeTab">知识库</button><button class="tab {{tab === 'history' ? 'active' : ''}}" data-tab="history" bindtap="changeTab">已审记录</button></view>
@@ -21,7 +23,7 @@
     <view class="row"><text class="tag">{{entry.category}}</text><text class="tag {{entry.status === 'pending' ? 'amber' : 'gray'}}">{{entry.statusLabel}}</text></view>
     <view class="card-title">{{entry.title}}</view><text class="body-text" selectable="{{true}}">{{entry.answer}}</text>
     <view class="review-steps" wx:if="{{entry.steps.length}}"><view wx:for="{{entry.steps}}" wx:key="index" wx:for-item="step">{{index + 1}}. {{step}}</view></view>
-    <view class="review-meta"><view>来源：{{entry.source}}</view><view>范围：{{entry.scope}}</view><view>途径：{{entry.channel}}</view><view wx:if="{{entry.aliases.length}}">同义问法：{{entry.aliases}}</view><view>{{entry.authorName || '演示知识库'}} · {{entry.updatedAt}} <text wx:if="{{entry.version}}">· v{{entry.version}}</text></view></view>
+    <view class="review-meta"><view>来源：{{entry.source}}</view><view>范围：{{entry.scope}} · {{entry.audienceLabel}}</view><view>途径：{{entry.channel}}</view><view wx:if="{{entry.aliases.length}}">同义问法：{{entry.aliases}}</view><view>{{entry.authorName || '演示知识库'}} · {{entry.updatedAt}} <text wx:if="{{entry.version}}">· v{{entry.version}}</text></view></view>
     <view class="reject-reason" wx:if="{{entry.reason}}">退回原因：{{entry.reason}}</view>
     <view class="actions" wx:if="{{role.id === 'maintainer' && (entry.status === 'draft' || entry.status === 'rejected')}}"><button class="outline" data-id="{{entry.id}}" bindtap="edit">继续编辑</button><button class="primary" data-id="{{entry.id}}" bindtap="submit">提交审核</button></view>
     <view class="actions" wx:if="{{role.id === 'maintainer' && tab === 'published'}}"><button class="secondary" data-id="{{entry.id}}" bindtap="edit">创建修订草稿</button></view>

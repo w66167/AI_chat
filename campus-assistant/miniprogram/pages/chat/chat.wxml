@@ -1,5 +1,6 @@
 <view class="chat-shell">
   <view class="chat-top"><view><text class="assistant-name">校园知答</text><text class="assistant-status">{{online ? '学生手册在线检索' : '本地知识检索'}} · {{roleName}}</text></view><button class="new-chat" bindtap="clear">新对话 ＋</button></view>
+  <view class="identity-bar" wx:if="{{isGuest}}" bindtap="toMine"><text class="identity-tag">游客</text><text class="identity-text">当前是匿名会话，只保留本次对话；需登录身份的知识不返回。</text><text class="identity-link">切换身份 →</text></view>
   <scroll-view class="chat-scroll" scroll-y="{{true}}" scroll-into-view="{{scrollTarget}}" scroll-with-animation="{{true}}">
     <view class="chat-content">
       <view class="welcome" wx:if="{{!messages.length}}">

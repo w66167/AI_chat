@@ -19,7 +19,12 @@ function score(query, item) {
     return similarity(query, normalized);
   }));
 }
-function answer(question, knowledge, previousId) {
+// restricted：当前身份看不到的已发布知识。传入后，如果“范围外”有比范围内明显更贴近的
+// 条目，就直接兜底——既不越权作答，也不透露受限条目是否存在（需求文档 2.1 权限规则）。
+function noAnswer() {
+  return { kind: 'fallback', text: '当前演示知识库中没有足够可靠的依据回答这个问题。你可以补充具体事项，或向学校公布的对应服务窗口核实。', channel: '尚未配置本校真实咨询电话和链接，请以学校官方网站公布的信息为准。', suggestions: ['校园卡丢了怎么办？', '图书馆什么时候开放？', '宿舍漏水怎么报修？'] };
+}
+function answer(question, knowledge, previousId, restricted) {
   const query = normalize(question);
   if (/查.*(我的|本人).*(成绩|学费|财务|病历)|我的成绩|我的课表|身份证号|验证码|系统提示词|忽略.*(指令|规则)|绕过.*权限/.test(query)) {
     return { kind: 'fallback', text: '这里提供公开知识与办事流程咨询，不查询个人业务数据，也不展示系统内部信息。请通过学校官方系统查询个人事项，勿发送密码、验证码或证件号码。', channel: '请使用学校官方教务或信息化服务入口。' };
@@ -33,13 +38,19 @@ function answer(question, knowledge, previousId) {
   const topicOnly = /^(校园卡|饭卡|图书馆|教务|后勤|就业|校园网)(怎么办|怎么用|相关问题|有什么服务|服务|呢)?$/.test(query);
   const ranked = knowledge.map((item) => ({ item, score: score(query, item) })).sort((a, b) => b.score - a.score);
   const top = ranked[0]; const next = ranked[1];
+  if (restricted && restricted.length) {
+    const hidden = Math.max.apply(null, restricted.map((item) => score(query, item)));
+    const best = top ? top.score : 0;
+    // 范围外有达到阈值、且比范围内更贴近的条目 → 兜底。
+    if (hidden >= .48 && hidden > best) return noAnswer();
+  }
   if (top && top.score >= .48 && (!topicOnly || top.score === 1) && (top.score >= .9 || !next || top.score - next.score >= .09)) return hit(top.item, false);
   if (topicOnly) {
     const topic = query.replace(/怎么办|怎么用|相关问题|有什么服务|服务|呢/g, '').replace('饭卡', '校园卡');
     const options = knowledge.filter((item) => item.category === topic || item.title.includes(topic)).slice(0, 3);
     if (options.length) return { kind: 'clarify', text: '你想了解哪方面？选一个问题，我再给你具体说明。', suggestions: options.map((item) => item.title) };
   }
-  return { kind: 'fallback', text: '当前演示知识库中没有足够可靠的依据回答这个问题。你可以补充具体事项，或向学校公布的对应服务窗口核实。', channel: '尚未配置本校真实咨询电话和链接，请以学校官方网站公布的信息为准。', suggestions: ['校园卡丢了怎么办？', '图书馆什么时候开放？', '宿舍漏水怎么报修？'] };
+  return noAnswer();
 }
 function hit(item, contextual) {
   return { kind: 'answer', text: item.answer, knowledgeId: item.id, title: item.title, category: item.category,

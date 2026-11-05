@@ -13,6 +13,8 @@ Page({
     loading: false,
     online: false,
     roleName: '学生',
+    roleId: 'student',
+    isGuest: false,
     expanded: {},
     starters: ['宿舍几点熄灯？', '挂科了还能补考吗？', '转专业需要什么条件？']
   },
@@ -29,13 +31,18 @@ Page({
     });
   },
   refresh() {
-    const messages = store.read().messages;
+    const current = store.role();
+    // 游客只读当前匿名会话（内存，不落盘）；登录身份读本机历史。
+    const messages = store.getMessages();
     this.setData({
       messages,
-      roleName: store.role().name,
+      roleName: current.name,
+      roleId: current.id,
+      isGuest: !current.history,
       scrollTarget: messages.length ? 'msg-' + messages[messages.length - 1].id : ''
     });
   },
+  toMine() { wx.switchTab({ url: '/pages/mine/mine' }); },
   inputChange(event) { this.setData({ input: event.detail.value }); },
   send() { this.sendQuestion(this.data.input); },
   askSuggestion(event) { this.sendQuestion(event.currentTarget.dataset.question); },
@@ -54,23 +61,28 @@ Page({
     this.setData({ busy: true, loading: true });
 
     const stamp = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    const messages = store.read().messages;
+    const current = store.role();
+    const messages = store.getMessages();
     const last = messages[messages.length - 1];
     // 追问承接：只把上一轮问题带给后端，由后端决定是否使用
     const history = last && last.speaker === 'user' ? [{ question: last.text, answer: '', chunk_id: null }] : [];
 
-    api.ask(question, history).then((res) => {
+    api.ask(question, history, current.identityType).then((res) => {
       if (res.ok) {
         this.setData({ online: true });
         this.append(question, stamp, api.toMessage(res.data));
         return;
       }
-      // 后端不可用：回退本地演示
+      // 后端不可用：回退本地演示（按当前身份过滤，范围外有更贴近的条目时兜底）
       this.setData({ online: false });
-      this.append(question, stamp, qa.answer(question, store.getKnowledge(), last && last.knowledgeId));
+      this.append(question, stamp, this.localAnswer(question, last));
     }, () => {
-      this.append(question, stamp, qa.answer(question, store.getKnowledge(), last && last.knowledgeId));
+      this.append(question, stamp, this.localAnswer(question, last));
     });
+  },
+
+  localAnswer(question, last) {
+    return qa.answer(question, store.getKnowledge(), last && last.knowledgeId, store.getRestrictedKnowledge());
   },
 
   append(question, stamp, result) {
@@ -101,7 +113,7 @@ Page({
       store.setFeedback(id, value);
       this.refresh();
       wx.showToast({ title: '谢谢你的反馈', icon: 'success' });
-      const message = store.read().messages.find((m) => m.id === id);
+      const message = store.getMessages().find((m) => m.id === id);
       if (message && message.remote) {
         api.feedback({
           session_id: api.sessionId(),
