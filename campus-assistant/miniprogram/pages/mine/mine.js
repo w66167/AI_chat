@@ -1,6 +1,6 @@
 const store = require('../../utils/store');
 Page({
-  data: { role: store.role(), stats: {}, recent: [], canManage: false, isGuest: false, pendingLabel: '' },
+  data: { role: store.role(), stats: {}, recent: [], libraries: [], canManage: false, isGuest: false, pendingLabel: '' },
   onShow() { this.refresh(); },
   refresh() {
     const role = store.role();
@@ -9,6 +9,8 @@ Page({
     const recent = role.history ? store.read().audit.slice(0, 5).map((item) => Object.assign({}, item, { actorName: (store.roleById(item.actor) || {}).name, displayTime: item.time.slice(0, 16).replace('T', ' ') + ' UTC' })) : [];
     this.setData({
       role, stats, recent, canManage: !!role.workbench, isGuest: !role.history,
+      // 每个身份能看到哪些知识库，以及每个知识库的建设状态，都摆在「我的」页里
+      libraries: store.getLibraries(),
       // 待审数量只对工作台角色展示，普通身份看不到运营数据。
       pendingLabel: role.workbench ? stats.pending + ' 待审 →' : '需切换角色 →'
     });

@@ -75,6 +75,8 @@ function toMessage(resp) {
   const citations = resp.citations || [];
   const first = citations[0] || null;
   const boundary = resp.boundary || null;
+  // 后端每条引用都带所属知识库（kb），这里把第一条的知识库作为本条回答的来源展示。
+  const kb = (first && first.kb) || null;
   const channel = boundary
     ? ((boundary.channel && boundary.channel.note) || boundary.message || '')
     : '';
@@ -87,17 +89,25 @@ function toMessage(resp) {
     steps: [],
     channel: channel,
     source: first ? first.source : '',
+    article: first ? (first.article || '') : '',
+    page: first ? (first.page_start || 0) : 0,
+    kbId: kb ? kb.id : '',
+    libraryName: kb ? kb.name : '',
+    libraryVersion: kb ? (kb.version || '') : '',
+    libraryUpdatedAt: kb ? (kb.updated_at || '') : '',
+    libraryIndexReady: kb ? !!kb.index_ready : false,
     // 后端知识块不在小程序本地知识库里，因此不提供“查看指南”跳转
     knowledgeId: '',
     version: first ? first.version : 0,
     updatedAt: resp.knowledge_version || '',
-    page: first ? first.page_start : 0,
     citations: citations.map((c) => ({
       chunkId: c.chunk_id,
       article: c.article || '',
       page: c.page_start || 0,
       doc: c.doc || '',
-      source: c.source || ''
+      source: c.source || '',
+      kbId: (c.kb && c.kb.id) || '',
+      kbName: (c.kb && c.kb.name) || ''
     })),
     scope: '杭州电子科技大学 · 2017年版手册口径',
     suggestions: resp.suggestions || [],

@@ -1,12 +1,15 @@
 const store = require('../../utils/store');
 Page({
-  data: { categories: store.categories, category: '全部', search: '', items: [] },
+  data: { categories: store.categories, category: '全部', search: '', items: [], libraryNames: '' },
   onShow() { this.refresh(); },
   refresh() {
     const keyword = this.data.search.trim().toLowerCase();
-    this.setData({ items: store.getKnowledge().filter((item) =>
-      (this.data.category === '全部' || item.category === this.data.category) &&
-      (!keyword || [item.title, item.answer].concat(item.aliases).join(' ').toLowerCase().includes(keyword))) });
+    this.setData({
+      libraryNames: store.librariesFor().map((item) => item.name).join(' / '),
+      items: store.getKnowledge().filter((item) =>
+        (this.data.category === '全部' || item.category === this.data.category) &&
+        (!keyword || [item.title, item.answer].concat(item.aliases).join(' ').toLowerCase().includes(keyword)))
+    });
   },
   changeCategory(event) { this.setData({ category: event.currentTarget.dataset.category }); this.refresh(); },
   searchChange(event) { this.setData({ search: event.detail.value }); this.refresh(); },
