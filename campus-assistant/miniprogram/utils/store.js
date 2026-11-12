@@ -1,4 +1,5 @@
 const seed = require('../data/knowledge');
+const visitorGuide = require('../data/visitor_guide_local');
 const registry = require('../data/libraries');
 const KEY = 'campus_assistant_demo_v1';
 const DEFAULT_ROLE = 'student';
@@ -30,9 +31,20 @@ function emptyGuestSession() { return { messages: [], feedback: [] }; }
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function date() { return new Date().toISOString().slice(0, 10); }
 function id(prefix) { return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7); }
+function bundledKnowledge() {
+  return clone(seed.knowledge).concat(clone(visitorGuide.entries || []));
+}
+function mergeVisitorEntries(db) {
+  const generated = visitorGuide.entries || [];
+  if (!generated.length) return db;
+  // 游客库随版本更新；旧缓存里保留其它知识，但同名游客条目以当前打包版本为准。
+  const generatedIds = new Set(generated.map((item) => item.id));
+  db.knowledge = db.knowledge.filter((item) => !generatedIds.has(item.id)).concat(clone(generated));
+  return db;
+}
 function fresh() {
   // 只有用户侧数据：身份、知识、会话、反馈。草稿与审核记录不属于用户端。
-  return { schemaVersion: 1, role: DEFAULT_ROLE, knowledge: clone(seed.knowledge), messages: [], feedback: [] };
+  return { schemaVersion: 1, role: DEFAULT_ROLE, knowledge: bundledKnowledge(), messages: [], feedback: [] };
 }
 function write(db) {
   // 写入成功后页面才更新，避免空间不足时出现“保存成功”的假象。
@@ -41,7 +53,7 @@ function write(db) {
 }
 function read() {
   const db = wx.getStorageSync(KEY);
-  if (db && db.schemaVersion === 1 && Array.isArray(db.knowledge)) return clone(db);
+  if (db && db.schemaVersion === 1 && Array.isArray(db.knowledge)) return mergeVisitorEntries(clone(db));
   return write(fresh());
 }
 function init() { return read(); }
@@ -62,8 +74,8 @@ function libraryAudience(item) {
   const library = libraryById(item && item.kbId) || libraryById(DEFAULT_KB);
   return library ? library.audience : [];
 }
-// 身份能访问的知识库：游客只有公开指南，学生再加学生手册，教师再加教职工手册。
-// 管理端角色（staff）照常能访问全部三个，路由由后端按 identity_type 处理。
+// 身份能访问的知识库：游客有公开指南与游客参观指南，学生再加学生手册，
+// 教师再加教职工手册。管理端角色（staff）照常由后端按 identity_type 处理。
 function librariesFor(current) {
   const identity = (current || role()).identityType;
   return libraries.filter((item) => item.audience.indexOf(identity) >= 0);

@@ -26,6 +26,21 @@
       "chunks_path": null
     },
     {
+      "id": "visitor-guide",
+      "name": "杭电游客参观指南",
+      "audience": ["guest"],
+      "version": "visitor-2026.11",
+      "updated_at": "2026-11-12",
+      "content_status": "ready",
+      "index_ready": false,
+      "scope_text": "杭州电子科技大学 · 公众参观与校园导览",
+      "summary": "面向游客的参观预约、交通到校、校园导览、校史概况与访客服务信息；当前为待核验演示内容。",
+      "documents": [
+        { "title": "杭州电子科技大学游客参观指南（待核验）", "version": "v1", "updated_at": "2026-11-12", "pages": 0 }
+      ],
+      "chunks_path": null
+    },
+    {
       "id": "student-handbook",
       "name": "学生手册",
       "audience": ["student", "teacher", "staff"],

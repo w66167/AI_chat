@@ -98,7 +98,7 @@ def test_user_app_has_no_admin_roles():
 
 
 def test_identity_routing():
-    assert [i['id'] for i in libraries.for_identity('guest')] == ['public-guide']
+    assert [i['id'] for i in libraries.for_identity('guest')] == ['public-guide', 'visitor-guide']
     assert [i['id'] for i in libraries.for_identity('student')] == ['public-guide', 'student-handbook']
     assert [i['id'] for i in libraries.for_identity('teacher')] == \
         ['public-guide', 'student-handbook', 'staff-handbook']
@@ -107,7 +107,9 @@ def test_identity_routing():
     # 只有学生手册真的建了索引，公开指南与教职工手册都还没有
     assert [i['id'] for i in libraries.searchable_for('student')] == ['student-handbook']
     assert [i['id'] for i in libraries.searchable_for('guest')] == []
-    # 公开指南与教职工手册都还没接入检索，要如实列出来
+    # 游客指南只给游客；公开指南、游客指南与教职工手册都还没接入在线检索
+    assert 'visitor-guide' not in [i['id'] for i in libraries.for_identity('student')]
+    assert [i['id'] for i in libraries.pending_for('guest')] == ['public-guide', 'visitor-guide']
     assert [i['id'] for i in libraries.pending_for('teacher')] == ['public-guide', 'staff-handbook']
 
 
@@ -134,11 +136,12 @@ def test_filter_hits():
 # ---------------------------------------------------------------- 回答行为
 
 def test_guest_has_no_searchable_library():
-    """游客的知识库（公开指南）还没接入检索：要如实说明，而不是拿学生手册冒充。"""
+    """游客的两个知识库都还没接入在线检索：要如实说明，而不是拿学生手册冒充。"""
     resp = ask('宿舍几点熄灯', 'guest', FakeRetriever(load()))
     assert resp['kb_gap'] is True
     assert resp['knowledge_bases'] == []
     assert '公开办事指南' in resp['kb_gap_reason']
+    assert '杭电游客参观指南' in resp['kb_gap_reason']
     assert resp['behavior'] == 'refuse_noanswer'
     assert resp['citations'] == []
 

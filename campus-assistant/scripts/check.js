@@ -23,6 +23,9 @@ const project = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'
 const handbookFile = path.join(mini, 'data', 'handbook_local.js');
 assert.ok(fs.existsSync(handbookFile), '缺少本地学生手册数据，请先运行 scripts/build-handbook-local.js');
 const handbookLocal = require(handbookFile);
+const visitorFile = path.join(mini, 'data', 'visitor_guide_local.js');
+assert.ok(fs.existsSync(visitorFile), '缺少本地游客指南数据，请先运行 scripts/build-visitor-local.js');
+const visitorLocal = require(visitorFile);
 
 function readSource(rel) { return fs.readFileSync(path.join(mini, rel), 'utf8'); }
 
@@ -92,18 +95,18 @@ console.log('PASS 用户端只剩游客/学生/教师：无工作台页面与知
 
 // ---- 知识库注册表：后端与小程序共用 knowledge_base/data/libraries.json
 assert.equal(registry.meta.source, 'knowledge_base/data/libraries.json');
-assert.deepEqual(registry.libraries.map((item) => item.id), ['public-guide', 'student-handbook', 'staff-handbook']);
-assert.deepEqual(registry.libraries.map((item) => item.audience.length), [4, 3, 2]);
+assert.deepEqual(registry.libraries.map((item) => item.id), ['public-guide', 'visitor-guide', 'student-handbook', 'staff-handbook']);
+assert.deepEqual(registry.libraries.map((item) => item.audience.length), [4, 1, 3, 2]);
 assert.equal(registry.libraries.filter((item) => item.index_ready).map((item) => item.id).join(','), 'student-handbook');
 assert.equal(registry.libraries.filter((item) => item.content_status === 'pending').map((item) => item.id).join(','), 'staff-handbook');
 // 管理端角色仍留在注册表里（后端与 kb_admin.py 要用），只是不 app=true
 assert.deepEqual(registry.identities.filter((item) => item.app === true).map((item) => item.id), ['guest', 'student', 'teacher']);
 assert.deepEqual(registry.identities.filter((item) => item.app === false).map((item) => item.id), ['maintainer', 'reviewer']);
 assert.ok(store.libraryById('staff-handbook').audience.includes('staff'), 'staff 身份范围要保留，后端按它路由');
-assert.deepEqual(store.librariesFor(store.roleById('guest')).map((item) => item.id), ['public-guide']);
+assert.deepEqual(store.librariesFor(store.roleById('guest')).map((item) => item.id), ['public-guide', 'visitor-guide']);
 assert.deepEqual(store.librariesFor(store.roleById('student')).map((item) => item.id), ['public-guide', 'student-handbook']);
 assert.deepEqual(store.librariesFor(store.roleById('teacher')).map((item) => item.id), ['public-guide', 'student-handbook', 'staff-handbook']);
-console.log('PASS 知识库注册表：三个知识库、身份范围与索引状态；管理端角色保留在注册表但不在用户端');
+console.log('PASS 知识库注册表：四个知识库、身份范围与索引状态；游客库只对 guest 开放');
 
 // ---- 离线检索：公开知识的标题与同义问法（以学生身份，可查学生手册）
 store.init();
@@ -145,6 +148,21 @@ assert.equal(qa.answer('校园卡丢了怎么办？', store.getKnowledge(), null
 assert.equal(qa.answer('宿舍几点熄灯？', store.getKnowledge(), null, null, null).kind, 'fallback');
 console.log('PASS 学生手册本地检索：30 条问答、586 条正文、公开知识优先级与游客隔离');
 
+// ---- 游客专属本地知识：只通过 visitor-guide 的 audience 对游客开放
+assert.equal(visitorLocal.entries.length, 10);
+assert.equal(visitorLocal.meta.kbId, 'visitor-guide');
+assert.equal(store.getItem('visitor-reservation'), undefined);
+store.setRole('guest');
+const guestKnowledge = store.getKnowledge();
+assert.equal(guestKnowledge.length, 30);
+assert.equal(store.getItem('visitor-reservation').kbId, 'visitor-guide');
+assert.equal(store.getItem('visitor-reservation').libraryName, '杭电游客参观指南');
+assert.equal(qa.answer('游客怎么预约参观杭州电子科技大学？', guestKnowledge).knowledgeId, 'visitor-reservation');
+assert.equal(qa.answer('参观杭电', guestKnowledge).knowledgeId, 'visitor-reservation');
+store.setRole('student');
+assert.ok(!store.getKnowledge().some((item) => item.kbId === 'visitor-guide'));
+console.log('PASS 游客专属知识库：本地可查，学生身份不可见');
+
 // ---- 知识条目归属知识库，可见性由知识库身份范围决定
 const publicItem = store.getItem('card-loss');
 assert.equal(publicItem.kbId, 'public-guide');
@@ -165,9 +183,10 @@ console.log('PASS 条目按 kbId 归属知识库，回答带「知识库 · 文�
 // ---- 三种使用者身份的知识范围与游客匿名会话
 store.setRole('guest');
 assert.equal(store.role().name, '游客');
-assert.equal(store.getKnowledge().length, 20);          // 游客只拿到公开知识
+assert.equal(store.getKnowledge().length, 30);          // 20 条公开 + 10 条游客指南
 assert.ok(!store.getKnowledge().some((item) => item.id === 'student-card-reissue'));
 assert.ok(!store.getKnowledge().some((item) => item.id === 'staff-proof'));
+assert.ok(store.getKnowledge().some((item) => item.kbId === 'visitor-guide'));
 assert.deepEqual(store.getRestrictedKnowledge().map((item) => item.id).sort(), ['staff-proof', 'student-card-reissue']);
 // 范围外有达标且更贴近的条目时必须兜底，不能拿一条不相关的公开条目硬答（2.1 权限规则）
 const hiddenByScope = qa.answer('教职工在职证明怎么办理？', store.getKnowledge(), null, store.getRestrictedKnowledge());
@@ -180,12 +199,13 @@ store.setRole('student');
 assert.equal(store.getKnowledge().length, 21);
 assert.ok(store.getKnowledge().some((item) => item.id === 'student-card-reissue'));
 assert.ok(!store.getKnowledge().some((item) => item.id === 'staff-proof'));
+assert.ok(!store.getKnowledge().some((item) => item.kbId === 'visitor-guide'));
 
 store.setRole('teacher');
 assert.equal(store.role().identityType, 'teacher');
 assert.equal(store.getKnowledge().length, 22);
 assert.equal(qa.answer('教职工在职证明怎么办理？', store.getKnowledge()).knowledgeId, 'staff-proof');
-assert.equal(store.getRestrictedKnowledge().length, 0);
+assert.equal(store.getRestrictedKnowledge().length, 10); // 教师也不能看到仅游客开放的参观指南
 
 // 游客匿名会话：不写本机存储、切换身份即失效、反馈不建立长期档案（FR-05、需求文档 2.1）
 store.setRole('guest');
@@ -208,10 +228,14 @@ console.log('PASS 游客/学生/教师的知识范围、范围外兜底、工作
 // ---- 我的页知识库清单
 store.setRole('student');
 const listed = store.getLibraries();
-assert.equal(listed.length, 3);
+assert.equal(listed.length, 4);
 assert.deepEqual(listed.filter((item) => item.visible).map((item) => item.id), ['public-guide', 'student-handbook']);
 assert.equal(listed.find((item) => item.id === 'staff-handbook').contentStatus, 'pending');
 assert.equal(listed.find((item) => item.id === 'public-guide').localEntries, 20);
+assert.equal(listed.find((item) => item.id === 'visitor-guide').localEntries, 0);
+store.setRole('guest');
+assert.deepEqual(store.getLibraries().filter((item) => item.visible).map((item) => item.id), ['public-guide', 'visitor-guide']);
+assert.equal(store.getLibraries().find((item) => item.id === 'visitor-guide').localEntries, 10);
 store.setRole('teacher');
 assert.equal(store.getLibraries().filter((item) => item.visible).length, 3);
 console.log('PASS 「我的」页知识库清单：可查范围与每个库的建设状态');
@@ -231,7 +255,7 @@ assert.equal(store.role().id, 'student', '写入失败时身份不应变化');
 store.clearMessages(); assert.equal(store.read().feedback.length, 0);
 store.reset();
 assert.equal(store.getKnowledge().length, 21);
-assert.equal(store.read().knowledge.length, 22);
+assert.equal(store.read().knowledge.length, 32);
 assert.equal(store.role().id, 'student');
 console.log('PASS 反馈去重、回答版本快照、存储失败提示、清除与恢复初始状态');
 console.log('全部本地检查通过。');
