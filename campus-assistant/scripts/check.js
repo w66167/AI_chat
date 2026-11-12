@@ -106,13 +106,22 @@ console.log('PASS 页面事件处理函数齐全；取数据的页面都有失�
 
 // ---- 知识库注册表：与后端共用 knowledge_base/data/libraries.json
 assert.equal(registry.meta.source, 'knowledge_base/data/libraries.json');
-assert.deepEqual(registry.libraries.map((item) => item.id), ['public-guide', 'student-handbook', 'staff-handbook']);
-assert.deepEqual(registry.libraries.map((item) => item.name), ['国家教育法规', '学生手册', '教职工手册']);
+assert.deepEqual(registry.libraries.map((item) => item.id), ['public-guide', 'visitor-guide', 'student-handbook', 'staff-handbook']);
+assert.deepEqual(registry.libraries.map((item) => item.name), ['国家教育法规', '杭电游客参观指南', '学生手册', '教职工手册']);
+// 游客参观指南只给游客；和教职工手册一样内容待补，没有语料也没接入检索
+const visitor = registry.libraries.find((item) => item.id === 'visitor-guide');
+assert.deepEqual(visitor.audience, ['guest']);
+assert.equal(visitor.content_status, 'pending');
+assert.equal(visitor.index_ready, false);
 assert.deepEqual(registry.libraries.filter((item) => item.index_ready).map((item) => item.id), ['public-guide', 'student-handbook']);
-assert.deepEqual(registry.libraries[0].doc_index, [1, 3]);
-assert.deepEqual(registry.libraries[1].doc_index, [4, 28]);
-assert.equal(registry.libraries[0].documents.length + registry.libraries[1].documents.length, 28, '两个库合起来是手册的 28 份文件');
+// 按下标取会随注册表新增条目而错位，这里按 id 取
+const publicGuide = registry.libraries.find((item) => item.id === 'public-guide');
+const studentHandbook = registry.libraries.find((item) => item.id === 'student-handbook');
+assert.deepEqual(publicGuide.doc_index, [1, 3]);
+assert.deepEqual(studentHandbook.doc_index, [4, 28]);
+assert.equal(publicGuide.documents.length + studentHandbook.documents.length, 28, '两个库合起来是手册的 28 份文件');
 assert.ok(!JSON.stringify(registry.libraries).includes('演示'), '注册表里不应再有演示字样');
+assert.deepEqual(registry.libraries.filter((item) => item.content_status === 'pending').map((item) => item.id), ['visitor-guide', 'staff-handbook']);
 // 用户端只有使用者身份；管理端角色留在注册表里（后端与 kb_admin.py 要用）但不进小程序
 assert.deepEqual(store.roles.map((item) => item.identityType), ['guest', 'student', 'teacher']);
 assert.deepEqual(registry.identities.filter((item) => item.app === false).map((item) => item.id), ['maintainer', 'reviewer']);
@@ -124,7 +133,7 @@ store.init();
 assert.equal(store.identity(), 'guest');
 assert.equal(store.role().name, '游客');
 assert.equal(store.token(), '');
-assert.deepEqual(store.accessibleLibraries().map((item) => item.id), ['public-guide'], '未登录按注册表推算：只有国家教育法规');
+assert.deepEqual(store.accessibleLibraries().map((item) => item.id), ['public-guide', 'visitor-guide'], '未登录按注册表推算：国家教育法规与游客参观指南');
 const device = store.deviceId();
 assert.ok(/^mp-/.test(device) && device.length >= 8 && device.length <= 64);
 assert.equal(store.deviceId(), device, '设备号生成后保持不变');
@@ -155,7 +164,7 @@ store.setSession(session('student'));
 assert.equal(store.token(), 'tok-1', '只刷新身份时令牌保留');
 assert.equal(store.role().name, '学生');
 assert.equal(store.getMessages().length, 0, '游客 → 学生：游客对话失效');
-assert.deepEqual(store.accessibleLibraries().map((item) => item.id), ['public-guide', 'student-handbook']);
+assert.deepEqual(store.accessibleLibraries().map((item) => item.id), ['public-guide', 'student-handbook'], '游客参观指南只给游客');
 
 // ---- 在校身份的对话写入本机，最多 120 条
 store.appendMessages([question, answer]);

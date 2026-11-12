@@ -103,7 +103,7 @@ def test_user_app_has_no_admin_roles():
 
 
 def test_identity_routing():
-    assert [i['id'] for i in libraries.for_identity('guest')] == ['public-guide']
+    assert [i['id'] for i in libraries.for_identity('guest')] == ['public-guide', 'visitor-guide']
     assert [i['id'] for i in libraries.for_identity('student')] == ['public-guide', 'student-handbook']
     assert [i['id'] for i in libraries.for_identity('teacher')] == \
         ['public-guide', 'student-handbook', 'staff-handbook']
@@ -113,6 +113,10 @@ def test_identity_routing():
     assert [i['id'] for i in libraries.searchable_for('student')] == ['public-guide', 'student-handbook']
     assert [i['id'] for i in libraries.searchable_for('guest')] == ['public-guide']
     assert [i['id'] for i in libraries.pending_for('teacher')] == ['staff-handbook']
+    # 游客参观指南只给游客，内容待补：在校身份看不到它，游客的回答里要如实说没检索它
+    assert 'visitor-guide' not in [i['id'] for i in libraries.for_identity('student')]
+    assert 'visitor-guide' not in [i['id'] for i in libraries.for_identity('teacher')]
+    assert [i['id'] for i in libraries.pending_for('guest')] == ['visitor-guide']
 
 
 def test_chunk_owner():
@@ -154,6 +158,8 @@ def test_guest_only_reaches_public_law():
     assert [c['chunk_id'] for c in resp['citations']] == [LAW]
     assert resp['citations'][0]['kb']['name'] == '国家教育法规'
     assert DORM not in json.dumps(resp, ensure_ascii=False)
+    assert resp['kb_pending'] == ['杭电游客参观指南']
+    assert '杭电游客参观指南' in resp['answer'] and '尚未接入检索' in resp['answer']
 
 
 def test_guest_is_refused_when_only_restricted_chunks_match():
