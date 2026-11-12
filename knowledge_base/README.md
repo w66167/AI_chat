@@ -43,9 +43,13 @@ knowledge_base/data/libraries.json
 
 | id | 名称 | 面向身份 | 内容状态 | 检索索引 |
 | --- | --- | --- | --- | --- |
-| `public-guide` | 校园公开办事指南 | 游客及所有登录身份 | ready（20 条本机演示条目） | 未接入 |
-| `student-handbook` | 学生手册 | 学生、教师、维护、审核 | ready（2017 版手册 586 块） | **已接入** |
+| `public-guide` | 国家教育法规 | 游客及所有登录身份 | ready（手册第 1–3 份文件，119 块） | **已接入** |
+| `student-handbook` | 学生手册 | 学生、教师、维护、审核 | ready（手册第 4–28 份文件，467 块） | **已接入** |
 | `staff-handbook` | 教职工手册 | 教师、维护、审核 | **pending（内容待补）** | 未接入 |
+
+前两个知识库来自同一份 PDF、共用一份语料 `handbook_chunks.jsonl` 和同一个索引，
+用注册表里的 `doc_index: [起, 止]`（含两端，对应切块的 `doc_index`）划分各自的文件范围。
+手册开头三份是教育部规章，属公开法规，所以单独成库对游客开放；其余 25 份校内规章需要在校身份。
 
 ### 新增或补内容：五步
 
@@ -77,8 +81,8 @@ knowledge_base/data/libraries.json
    & $py ..\backend\tests\test_libraries.py      # 身份路由与出处标注
    ```
 
-> `index_ready=false` 的知识库，后端**不会**拿别的库的内容冒充它：该身份若只有未接入的库，
-> 接口返回 `kb_gap=true`；若有接入的库，答案末尾会注明「某某知识库尚未接入检索，本次没有检索它」。
+> `index_ready=false` 的知识库，后端**不会**拿别的库的内容冒充它：
+> 答案末尾会注明「某某知识库尚未接入检索，本次没有检索它」。
 
 ## 管理端：知识维护与审核
 
@@ -114,8 +118,9 @@ python scripts\kb_admin.py log --limit 10
 运行数据落在 `data/kb_drafts.json`、`data/kb_published.json`、`data/kb_audit.jsonl`，
 已加进 `.gitignore`；想从零演示审核流程，删掉这三个文件即可。
 
-> **还没做**：发布结果没有自动导出成用户端的 `campus-assistant/miniprogram/data/knowledge.js`。
-> 现在小程序里那 22 条是随包发布的「已发布集合」，管理端改完知识还需要一步导出才能体现在小程序里。
+> **还没做**：发布结果没有接进检索语料。现在问答用的是手册切块 `handbook_chunks.jsonl`，
+> 管理端发布的条目落在 `data/kb_published.json`，要体现在问答里还需要一步合并进语料并重建索引。
+> 小程序不再随包带任何知识条目。
 
 ## 复现
 
@@ -178,21 +183,19 @@ $py = "C:\Users\zaaaaaaaaaas\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\
 
 审核流程：维护人员按 `handbook_fulltext.txt` 对应页核对 → 修改 `status` 为 `pending` → 审核员核对后置 `published` → 重新运行 `export_miniprogram.py`。
 
-## 接进当前小程序
+## 这 30 条问答现在怎么用
 
-`handbook.js` 与 `miniprogram/data/knowledge.js` 的字段兼容（`id/category/title/aliases/answer/steps/channel/source/scope/version/updatedAt/status`），只多一个 `handbookRef`。
+小程序不再随包带知识条目，所以 `handbook_qa.json` 不是直接展示给用户的答案，而是在后端起三个作用：
 
-改 `miniprogram/data/knowledge.js` 末尾两行即可合并：
+1. **检索的同义词表**：每条问答的标题和别名挂到它引用的那条条文上，参与关键词检索
+   （`kb/lexical.py` 的 `faq_map` 与 `FieldedBM25Retriever`）。条文写「考核不及格」，学生问「挂科」，靠这一路接上。
+2. **示例问题**：小程序首页的「同学们常问」和问答页的开场问题取自这些标题（`backend/app/handbook.py` 的 `suggestions`）。
+3. **推荐追问**：没有大模型时，回答下面的相关问题从这里按字面相近挑。
 
-```js
-const handbook = require('./handbook');
-const knowledge = [...definitions.map(toItem), ...handbook.knowledge];
-const categories = ['全部', ...handbook.categories];
-```
+所以给它补条目、补别名，直接提升的是「口语问法能不能查到」。条目的 `handbook_ref` 必须能定位到条文，
+`scripts/check_kb.py` 会校验。
 
-注意 `store.js` 的 `getKnowledge()` 只返回 `status === 'published'`，所以合并后默认**不会**出现在问答里——这正是需求文档要求的「审核后生效」。演示时可用 `export_miniprogram.py --publish` 生成全发布版本，但要明确标注为演示数据。
-
-首页「已发布知识数量」、问答页来源展示、知识工作台的「创建修订草稿」都能直接复用，因为字段是对齐的。
+`export_miniprogram.py` 和它生成的 `data/handbook.js` 是早期「小程序随包带知识」方案留下的，现在没有地方引用。
 
 ## 评测问题集（150 条）
 

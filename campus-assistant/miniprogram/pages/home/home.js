@@ -3,31 +3,74 @@ const api = require('../../utils/api');
 
 Page({
   data: {
-    online: false,
-    count: 0,
-    quickLinks: [
-      { label: '校园卡', mark: '卡', color: 'green', question: '校园卡丢了怎么办？', hint: '挂失 · 充值' },
-      { label: '图书馆', mark: '书', color: 'blue', question: '图书馆', hint: '借阅 · 开放' },
-      { label: '后勤服务', mark: '修', color: 'amber', question: '宿舍漏水怎么报修？', hint: '住宿 · 报修' },
-      { label: '教务服务', mark: '学', color: 'purple', question: '在读证明怎么办理？', hint: '证明 · 选课' }
-    ],
-    questions: ['校园卡丢了怎么办？', '图书馆什么时候开放？', '校园网怎么连接？']
+    loading: true,
+    offline: false,
+    offlineReason: '',
+    roleName: '游客',
+    isGuest: true,
+    libraryNames: '',
+    draft: '',
+    questions: [],
+    categories: [],
+    hidden: 0
   },
 
   onShow() {
-    api.health().then((res) => {
-      const ok = res.ok && res.data && res.data.model_loaded;
+    // 身份没变且已经加载过，就不重复请求
+    if (this.loadedFor === store.identity() && !this.data.offline) return this.syncRole();
+    this.load();
+  },
+
+  syncRole() {
+    const role = store.role();
+    this.setData({
+      roleName: role.name,
+      isGuest: role.identityType === 'guest',
+      libraryNames: store.accessibleLibraries().map((item) => item.name).join('、')
+    });
+  },
+
+  load() {
+    this.setData({ loading: !this.data.questions.length });
+    Promise.all([api.suggestions(), api.catalog()]).then(([suggested, catalog]) => {
+      if (!suggested.ok || !catalog.ok) {
+        const failed = suggested.ok ? catalog : suggested;
+        this.setData({ loading: false, offline: true, offlineReason: failed.error });
+        return this.syncRole();
+      }
+      this.loadedFor = store.identity();
+      this.syncRole();
       this.setData({
-        online: !!ok,
-        count: ok ? res.data.chunks : store.stats().knowledge
+        loading: false,
+        offline: false,
+        questions: suggested.data.questions.slice(0, 5),
+        categories: catalog.data.groups.map((group) => ({ name: group.category, count: group.docs.length })),
+        hidden: catalog.data.hidden
       });
     });
   },
 
-  ask(event) {
-    getApp().globalData.pendingQuestion = event.currentTarget.dataset.question || '';
+  draftChange(event) { this.setData({ draft: event.detail.value }); },
+
+  submit() {
+    const question = this.data.draft.trim();
+    if (!question) return wx.switchTab({ url: '/pages/chat/chat' });
+    this.setData({ draft: '' });
+    this.go(question);
+  },
+
+  ask(event) { this.go(event.currentTarget.dataset.question); },
+
+  go(question) {
+    getApp().globalData.pendingQuestion = question;
     wx.switchTab({ url: '/pages/chat/chat' });
   },
 
-  openServices() { wx.switchTab({ url: '/pages/services/services' }); }
+  openCategory(event) {
+    getApp().globalData.pendingCategory = event.currentTarget.dataset.name;
+    wx.switchTab({ url: '/pages/handbook/handbook' });
+  },
+
+  openHandbook() { wx.switchTab({ url: '/pages/handbook/handbook' }); },
+  openMine() { wx.switchTab({ url: '/pages/mine/mine' }); }
 });

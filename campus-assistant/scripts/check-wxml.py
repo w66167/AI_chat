@@ -5,7 +5,7 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
-MP = r"D:\校园智能问答系统\AI_chat\campus-assistant\miniprogram"
+MP = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'miniprogram')
 VOID = {'input', 'image', 'icon', 'progress', 'slider', 'switch', 'textarea', 'canvas', 'import', 'include'}
 
 bad = 0

@@ -1,0 +1,12 @@
+.handbook-search { margin-top: 32rpx; }
+
+.tabs { white-space: nowrap; margin: 28rpx -32rpx 0; padding: 0 32rpx; width: auto; }
+.tab { display: inline-block; padding: 12rpx 28rpx; margin-right: 14rpx; border-radius: 100rpx; font-size: 25rpx; color: var(--ink-2); background: var(--card); }
+.tab.on { background: var(--green); color: #fff; font-weight: 600; }
+
+.group { margin-top: 36rpx; }
+.group-title { font-size: 25rpx; color: var(--ink-2); font-weight: 600; margin-bottom: 14rpx; }
+.doc-name { font-family: var(--serif); font-size: 29rpx; font-weight: 700; line-height: 1.5; }
+
+.result-head { font-size: 24rpx; color: var(--ink-2); margin: 32rpx 0 18rpx; }
+.handbook-notice { margin-top: 36rpx; }

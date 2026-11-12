@@ -1,58 +1,92 @@
 const store = require('../../utils/store');
-const qa = require('../../utils/qa');
 const api = require('../../utils/api');
-const handbookLocal = require('../../data/handbook_local');
 
-// 在线/本地由 utils/api.js 的 ONLINE_MODE 控制；本地模式不发起网络请求，
-// 直接使用本机已发布知识。
+const FOLD_LENGTH = 220;   // 条文原文超过这个长度先折叠
+
 Page({
   data: {
     messages: [],
     input: '',
     scrollTarget: '',
     busy: false,
-    loading: false,
-    online: false,
-    roleName: '学生',
-    roleId: 'student',
-    isGuest: false,
-    kbNotice: '',
+    asking: '',          // 正在等待回答的问题
+    error: '',           // 上一次提问失败的原因
+    failedQuestion: '',
+    roleName: '游客',
+    isGuest: true,
     libraryNames: '',
-    expanded: {},
-    starters: ['宿舍几点熄灯？', '挂科了还能补考吗？', '转专业需要什么条件？']
+    starters: [],
+    expanded: {}
   },
+
   onShow() {
     this.refresh();
-    this.checkOnline();
-    const question = getApp().globalData.pendingQuestion;
-    if (question) { getApp().globalData.pendingQuestion = ''; this.sendQuestion(question); }
+    this.loadStarters();
+    const app = getApp().globalData;
+    if (app.pendingDraft) { this.setData({ input: app.pendingDraft }); app.pendingDraft = ''; }
+    if (app.pendingQuestion) { const question = app.pendingQuestion; app.pendingQuestion = ''; this.sendQuestion(question); }
   },
-  checkOnline() {
-    api.health().then((res) => {
-      const ok = res.ok && res.data && res.data.model_loaded;
-      // 上一次回答因为「身份的知识库没接入检索」回退了本机知识时，保持本地徽标，
-      // 否则切个 tab 回来徽标又变「在线」，和刚刚那条回答的来源自相矛盾。
-      this.setData({ online: !!ok && !this.data.kbNotice });
-    });
-  },
+
   refresh() {
-    const current = store.role();
-    // 游客只读当前匿名会话（内存，不落盘）；登录身份读本机历史。
+    const role = store.role();
     const messages = store.getMessages();
     this.setData({
       messages,
-      roleName: current.name,
-      roleId: current.id,
-      isGuest: !current.history,
-      // 当前身份能查的知识库：游客只有公开指南，教师会多出教职工手册
-      libraryNames: store.librariesFor(current).map((item) => item.name).join(' / '),
+      roleName: role.name,
+      isGuest: role.identityType === 'guest',
+      libraryNames: store.accessibleLibraries().map((item) => item.name).join('、'),
       scrollTarget: messages.length ? 'msg-' + messages[messages.length - 1].id : ''
     });
   },
-  toMine() { wx.switchTab({ url: '/pages/mine/mine' }); },
+
+  // 欢迎页的示例问题由后端按身份给：游客拿到的是国家法规能答的问题
+  loadStarters() {
+    if (this.startersFor === store.identity() && this.data.starters.length) return;
+    api.suggestions().then((res) => {
+      if (!res.ok) return;
+      this.startersFor = store.identity();
+      this.refresh();
+      this.setData({ starters: res.data.questions.slice(0, 4) });
+    });
+  },
+
   inputChange(event) { this.setData({ input: event.detail.value }); },
   send() { this.sendQuestion(this.data.input); },
   askSuggestion(event) { this.sendQuestion(event.currentTarget.dataset.question); },
+  retry() { this.sendQuestion(this.data.failedQuestion); },
+
+  sendQuestion(value) {
+    const question = String(value || '').trim();
+    if (!question || this.data.busy) return;
+    if (question.length > 300) return wx.showToast({ title: '问题请控制在 300 字内', icon: 'none' });
+    this.setData({ busy: true, asking: question, error: '', failedQuestion: '', input: '', scrollTarget: 'asking' });
+
+    // 消息成对追加（提问 + 回答），所以最后一条是上一轮的回答，带着上一轮的问题
+    const messages = store.getMessages();
+    const last = messages[messages.length - 1];
+    const previous = last && last.kind === 'answer' ? last.question : '';
+
+    api.ask(question, previous, last ? last.sessionId : '').then((res) => {
+      if (!res.ok) {
+        // 没有本地知识可以顶替：如实说连不上，并保留问题让用户重试
+        this.setData({ busy: false, asking: '', error: res.error, failedQuestion: question, scrollTarget: 'error' });
+        return;
+      }
+      const stamp = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      const answer = api.toMessage(res.data);
+      try {
+        store.appendMessages([
+          { id: store.id('q'), speaker: 'user', text: question, time: stamp },
+          Object.assign({ id: store.id('a'), speaker: 'assistant', question, time: stamp, feedback: '',
+            folded: answer.mode === 'excerpt' && answer.text.length > FOLD_LENGTH }, answer)
+        ]);
+      } catch (error) {
+        wx.showToast({ title: error.message, icon: 'none' });
+      }
+      this.setData({ busy: false, asking: '' });
+      this.refresh();
+    });
+  },
 
   toggleExpand(event) {
     const id = event.currentTarget.dataset.id;
@@ -61,118 +95,45 @@ Page({
     this.setData({ expanded });
   },
 
-  sendQuestion(value) {
-    const question = String(value || '').trim();
-    if (!question || this.data.busy) return;
-    if (question.length > 300) return wx.showToast({ title: '请将问题控制在 300 字内', icon: 'none' });
-    this.setData({ busy: true, loading: true });
-
-    const stamp = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    const current = store.role();
-    const messages = store.getMessages();
-    const last = messages[messages.length - 1];
-    // 追问承接：只把上一轮问题带给后端，由后端决定是否使用
-    const history = last && last.speaker === 'user' ? [{ question: last.text, answer: '', chunk_id: null }] : [];
-
-    api.ask(question, history, current.identityType).then((res) => {
-      if (res.ok && res.data && res.data.kb_gap) {
-        // 当前身份对应的知识库还没接入在线检索服务（例如游客的「公开办事指南」）：
-        // 回退到本机已发布知识，并说明本次用的是哪个知识库，不拿别的库硬答。
-        this.setData({ online: false, kbNotice: res.data.kb_gap_reason || '当前身份对应的知识库尚未接入在线检索，本次改用本机已发布知识回答。' });
-        this.append(question, stamp, this.localAnswer(question, last));
-        return;
-      }
-      if (res.ok) {
-        const response = res.data || {};
-        // 在线检索目前只覆盖学生手册。学生手册没有命中时，再用本机公开
-        // 办事知识兜底，避免“校园卡丢了怎么办”等本地条目被在线拒答覆盖。
-        if (response.behavior === 'refuse_noanswer') {
-          const local = this.localAnswer(question, last);
-          if (local && local.kind === 'answer') {
-            this.setData({ online: true, kbNotice: '' });
-            this.append(question, stamp, local);
-            return;
-          }
-        }
-        this.setData({ online: true, kbNotice: '' });
-        this.append(question, stamp, api.toMessage(response));
-        return;
-      }
-      // 后端不可用：回退本地演示（按当前身份过滤，范围外有更贴近的条目时兜底）
-      this.setData({ online: false });
-      this.append(question, stamp, this.localAnswer(question, last));
-    }, () => {
-      this.append(question, stamp, this.localAnswer(question, last));
-    });
-  },
-
-  localAnswer(question, last) {
-    const current = store.role();
-    const canUseHandbook = store.librariesFor(current).some((item) => item.id === 'student-handbook');
-    return qa.answer(
-      question,
-      store.getKnowledge(),
-      last && last.knowledgeId,
-      store.getRestrictedKnowledge(),
-      canUseHandbook ? handbookLocal : null
-    );
-  },
-
-  append(question, stamp, result) {
-    try {
-      store.appendMessages([
-        { id: store.id('q'), speaker: 'user', text: question, time: stamp },
-        Object.assign({ id: store.id('a'), speaker: 'assistant', question, time: stamp, feedback: '' }, result)
-      ]);
-      this.setData({ input: '', loading: false });
-      this.refresh();
-    } catch (error) {
-      wx.showModal({ title: '暂时无法保存', content: error.message, showCancel: false });
-    } finally {
-      this.setData({ busy: false, loading: false });
-    }
-  },
-
-  openSource(event) {
-    const id = event.currentTarget.dataset.id;
-    if (!id) return;   // 后端知识块不在本地知识库，没有详情页可跳
-    wx.navigateTo({ url: '/pages/detail/detail?id=' + encodeURIComponent(id) });
+  openArticle(event) {
+    wx.navigateTo({ url: '/pages/article/article?id=' + encodeURIComponent(event.currentTarget.dataset.id) });
   },
 
   feedback(event) {
     const id = event.currentTarget.dataset.id;
     const value = event.currentTarget.dataset.value;
     try {
-      store.setFeedback(id, value);
-      this.refresh();
-      wx.showToast({ title: '谢谢你的反馈', icon: 'success' });
-      const message = store.getMessages().find((m) => m.id === id);
-      if (message && message.remote) {
-        api.feedback({
-          session_id: api.sessionId(),
-          message_id: id,
-          resolved: value === 'resolved',
-          score: value === 'resolved' ? 5 : 3,
-          reason: '',
-          chunk_id: null
-        });
-      }
+      store.updateMessage(id, { feedback: value });
     } catch (error) {
-      wx.showToast({ title: error.message, icon: 'none' });
+      return wx.showToast({ title: error.message, icon: 'none' });
     }
+    this.refresh();
+    const message = store.getMessages().find((item) => item.id === id);
+    api.feedback({
+      session_id: message.sessionId || 'local',
+      message_id: message.traceId || id,
+      resolved: value === 'resolved',
+      score: value === 'resolved' ? 5 : 2,
+      reason: message.question || '',
+      chunk_id: message.citations.length ? message.citations[0].chunkId : null
+    });
+    wx.showToast({ title: value === 'resolved' ? '已记录，谢谢' : '已记录，会用来改进', icon: 'none' });
   },
 
   clear() {
+    if (!this.data.messages.length) return;
     wx.showModal({
-      title: '开始新的咨询？',
-      content: '将清除本机当前对话和对应反馈，知识内容会保留。',
+      title: '开始新对话？',
+      content: '当前对话会从本机清除。',
+      confirmText: '清除',
       success: (res) => {
-        if (res.confirm) {
-          try { store.clearMessages(); this.setData({ expanded: {} }); this.refresh(); api.resetSession(); } catch (error) {
-            wx.showToast({ title: error.message, icon: 'none' });
-          }
-        }
+        if (!res.confirm) return;
+        try { store.clearMessages(); } catch (error) { return wx.showToast({ title: error.message, icon: 'none' }); }
+        this.setData({ expanded: {}, error: '', failedQuestion: '' });
+        this.refresh();
       }
     });
-  }
+  },
+
+  openMine() { wx.switchTab({ url: '/pages/mine/mine' }); }
 });

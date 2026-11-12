@@ -1,22 +1,48 @@
-<view class="page home-page">
-  <view class="brand-line"><text class="eyebrow">CAMPUS ASSISTANT</text><text class="online"><text class="dot"></text>{{online ? '学生手册在线' : '本地演示'}}</text></view>
-  <view class="hero">
-    <view class="hero-label">你的校园生活小助手</view>
-    <view class="hero-title">校园的事，<br/>在这里问。</view>
-    <view class="hero-desc">找流程、查指南，让每个答案都有出处。</view>
-    <view class="hero-ornament"><view class="orbit orbit-one"></view><view class="orbit orbit-two"></view><text class="hero-spark">✳</text></view>
-    <button class="hero-button" bindtap="ask"><text>开始咨询</text><text>↗</text></button>
-    <view class="hero-foot">{{count}} 条{{online ? '学生手册' : '已发布'}}知识 · 6 类校园服务</view>
+<view class="ask-block">
+  <view class="ask-who">{{roleName}}<text wx:if="{{libraryNames}}">，可查{{libraryNames}}</text></view>
+  <view class="ask-title">手册里怎么规定的，问一句就知道。</view>
+  <view class="ask-box">
+    <input class="ask-input" value="{{draft}}" placeholder="比如：挂科了还能补考吗" placeholder-class="ask-placeholder" maxlength="300" confirm-type="send" bindinput="draftChange" bindconfirm="submit"/>
+    <button class="ask-send" bindtap="submit">提问</button>
   </view>
-  <view class="section-head"><text class="section-title">常用服务</text><button class="section-link" bindtap="openServices">全部指南 →</button></view>
-  <view class="quick-grid">
-    <button class="quick-card" wx:for="{{quickLinks}}" wx:key="label" data-question="{{item.question}}" bindtap="ask">
-      <view class="service-mark {{item.color}}">{{item.mark}}</view><view class="quick-title">{{item.label}}</view><view class="muted">{{item.hint}}</view>
-    </button>
+  <view class="ask-foot">回答依据《学生手册》2017 年 9 月版，每条都附出处和页码。</view>
+</view>
+
+<view class="page home-body">
+  <view class="state" wx:if="{{loading}}"><view class="state-desc">正在加载…</view></view>
+
+  <view class="state" wx:elif="{{offline}}">
+    <view class="state-title">连不上问答服务</view>
+    <view class="state-desc">{{offlineReason}}</view>
+    <button class="btn btn-ghost" bindtap="load">重新连接</button>
   </view>
-  <view class="section-head"><text class="section-title">大家常问</text><text class="muted">从这里开始</text></view>
-  <view class="question-list">
-    <button class="question-row" wx:for="{{questions}}" wx:key="*this" data-question="{{item}}" bindtap="ask"><text class="question-index">0{{index + 1}}</text><text class="question-text">{{item}}</text><text class="question-arrow">↗</text></button>
-  </view>
-  <view class="demo-foot"><text class="foot-dot"></text>{{online ? '内容来自学生手册 · 实际办理以本校公告为准' : '课题演示 · 使用样例资料，办理以本校公告为准'}}</view>
+
+  <block wx:else>
+    <view class="notice" wx:if="{{isGuest && hidden}}">
+      <view>你现在是游客，只能查国家教育法规。绑定在校身份后可查学籍、成绩、奖助、住宿等 {{hidden}} 份校内规章。</view>
+      <view class="notice-action" bindtap="openMine">去绑定身份</view>
+    </view>
+
+    <view class="section">
+      <view class="section-head"><text class="section-title">同学们常问</text></view>
+      <view class="panel">
+        <button class="row" wx:for="{{questions}}" wx:key="*this" data-question="{{item}}" bindtap="ask">
+          <view class="row-main"><view class="row-title">{{item}}</view></view>
+          <view class="chevron"></view>
+        </button>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-head"><text class="section-title">按事项翻手册</text><button class="section-more" bindtap="openHandbook">全部文件</button></view>
+      <view class="category-grid">
+        <button class="category" wx:for="{{categories}}" wx:key="name" data-name="{{item.name}}" bindtap="openCategory">
+          <view class="category-name">{{item.name}}</view>
+          <view class="category-count">{{item.count}} 份文件</view>
+        </button>
+      </view>
+    </view>
+
+    <view class="home-foot">手册前言写明：内容与学校文件不符的，以学校文件为准。</view>
+  </block>
 </view>

@@ -1,0 +1,24 @@
+<view class="state" wx:if="{{loading}}"><view class="state-desc">正在加载…</view></view>
+
+<view class="state" wx:elif="{{error}}">
+  <view class="state-title">这份文件打不开</view>
+  <view class="state-desc">{{error}}</view>
+  <button class="btn btn-ghost" bindtap="load">重新加载</button>
+</view>
+
+<view class="page" wx:else>
+  <view class="doc-title">{{doc.name}}</view>
+  <view class="page-sub">{{doc.kb_name}}，手册第 {{doc.page_start}}–{{doc.page_end}} 页，共 {{doc.chunks}} 条</view>
+  <button class="btn btn-ghost doc-ask" bindtap="ask">就这份文件提问</button>
+
+  <view class="chapter" wx:for="{{chapters}}" wx:key="chapter" wx:for-item="chapter">
+    <view class="chapter-title" wx:if="{{chapter.chapter}}">{{chapter.chapter}}</view>
+    <button class="slip" wx:for="{{chapter.articles}}" wx:key="id" wx:for-item="article" data-id="{{article.id}}" bindtap="openArticle">
+      <view class="slip-main">
+        <view class="slip-article">{{article.article || '正文'}}</view>
+        <view class="slip-text">{{article.preview}}</view>
+      </view>
+      <view class="slip-page">第 {{article.page_start}} 页</view>
+    </button>
+  </view>
+</view>

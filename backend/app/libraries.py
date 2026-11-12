@@ -7,7 +7,8 @@
 
 这里只做两件事，检索本身仍在 knowledge_base 里：
     1. 身份 → 能访问哪些知识库（按知识库的 audience 反查）
-    2. 知识块 → 属于哪个知识库（按各知识库声明的 chunks_path 反查）
+    2. 知识块 → 属于哪个知识库（按各知识库声明的 chunks_path 反查；
+       多个知识库共用一份语料时，再按 doc_index=[起, 止] 划分各自的文件范围）
 """
 import json
 import os
@@ -81,7 +82,8 @@ def chunk_owner_map():
     """chunk_id → 知识库 id。
 
     读一遍各知识库声明的 chunks_path。语料文件不存在（例如教职工手册内容还没补）
-    就跳过，不影响其它知识库。
+    就跳过，不影响其它知识库。知识库声明了 doc_index=[起, 止] 时，只认领这个范围内的文件
+    ——学生手册 PDF 里前三份是教育部规章（游客可查），后面 25 份是校内规章（登录身份可查）。
     """
     global _CHUNK_OWNER
     if _CHUNK_OWNER is None:
@@ -93,14 +95,18 @@ def chunk_owner_map():
             path = rel if os.path.isabs(rel) else os.path.join(KB_DIR, rel)
             if not os.path.exists(path):
                 continue
+            span = item.get('doc_index') or None
             with open(path, encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if not line:
                         continue
                     try:
-                        owner[json.loads(line)['id']] = item['id']
-                    except (ValueError, KeyError):
+                        row = json.loads(line)
+                        if span and not (span[0] <= int(row.get('doc_index') or 0) <= span[1]):
+                            continue
+                        owner[row['id']] = item['id']
+                    except (ValueError, KeyError, TypeError):
                         continue
         _CHUNK_OWNER = owner
     return _CHUNK_OWNER

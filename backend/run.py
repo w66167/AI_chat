@@ -10,8 +10,6 @@ schemas.py 完全一致，换成 FastAPI 时只需把 server.py 的路由映射�
     & "知识库\\.venv\\Scripts\\python.exe" run.py --port 8000
 """
 import argparse
-import json
-import os
 import sys
 
 from app.server import make_server
@@ -24,14 +22,16 @@ def main():
     args = ap.parse_args()
 
     httpd = make_server(args.host, args.port)
-    print('API 已启动：http://%s:%d' % (args.host, args.port))
-    print('  健康检查  GET  /v1/health')
-    print('  问答      POST /v1/ask        {"question": "宿舍几点熄灯"}')
-    print('  反馈      POST /v1/feedback   {"session_id": "...", "message_id": "...", "resolved": true}')
-    print('  接口说明  GET  /docs')
-    print('模型预热中（约 12 秒，期间 /v1/health 返回 status=warming）……', flush=True)
+    print('API 已启动：http://%s:%d   接口说明 /docs' % (args.host, args.port))
 
-    from app import deps
+    from app import auth, deps, llm
+    cfg = deps.get_config()
+    generation = llm.status(cfg)
+    print('  生成模型  %s' % ('%s / %s' % (generation['provider'], generation['model']) if generation['enabled']
+                             else '未配置密钥 → 回答为条文原文（在 secrets.json 填 llm_api_key 后启用）'))
+    print('  登录方式  %s' % ('微信登录' if auth.mode(cfg) == 'wechat'
+                             else '开发模式（未配置小程序 AppID / AppSecret，按设备号发本地账号）'))
+    print('  检索器装配中，期间 /v1/health 返回 status=warming ……', flush=True)
     deps.warmup_async()
 
     print('按 Ctrl+C 停止。')

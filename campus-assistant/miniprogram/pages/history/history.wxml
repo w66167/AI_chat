@@ -1,0 +1,42 @@
+<view class="state" wx:if="{{loading}}"><view class="state-desc">正在加载…</view></view>
+
+<view class="state" wx:elif="{{needIdentity}}">
+  <view class="state-title">游客不保存提问记录</view>
+  <view class="state-desc">绑定在校身份后，问过的问题会保存下来，换手机也能看到。</view>
+  <button class="btn btn-ghost" bindtap="openMine">去绑定身份</button>
+</view>
+
+<view class="state" wx:elif="{{error}}">
+  <view class="state-title">提问记录没有加载出来</view>
+  <view class="state-desc">{{error}}</view>
+  <button class="btn btn-ghost" bindtap="load">重新加载</button>
+</view>
+
+<view class="state" wx:elif="{{!items.length}}">
+  <view class="state-title">还没有提问记录</view>
+  <view class="state-desc">在问答页问过的问题会出现在这里。</view>
+  <button class="btn btn-ghost" bindtap="openChat">去提问</button>
+</view>
+
+<view class="page" wx:else>
+  <view class="history-head"><text class="muted">最近 {{items.length}} 条</text><button class="history-clear" bindtap="clear">清空</button></view>
+  <view class="panel">
+    <view class="record" wx:for="{{items}}" wx:key="id">
+      <button class="record-head" data-id="{{item.id}}" bindtap="toggle">
+        <view class="row-main">
+          <view class="record-question">{{item.question}}</view>
+          <view class="row-desc">{{item.ts}}<text wx:if="{{item.behavior !== 'answer' && item.behavior !== 'answer_with_caveat'}}">，未作答</text></view>
+        </view>
+        <view class="chevron {{open[item.id] ? 'chevron-down' : ''}}"></view>
+      </button>
+      <view class="record-body" wx:if="{{open[item.id]}}">
+        <text class="record-answer" selectable="{{true}}">{{item.answer}}</text>
+        <button class="slip" wx:for="{{item.citations}}" wx:key="chunk_id" wx:for-item="cite" data-id="{{cite.chunk_id}}" bindtap="openArticle">
+          <view class="slip-main"><view class="slip-article">{{cite.article || '正文'}}</view><view class="slip-doc">《{{cite.doc}}》</view></view>
+          <view class="slip-page" wx:if="{{cite.page_start}}">第 {{cite.page_start}} 页</view>
+        </button>
+        <button class="record-again" data-question="{{item.question}}" bindtap="askAgain">再问一次</button>
+      </view>
+    </view>
+  </view>
+</view>

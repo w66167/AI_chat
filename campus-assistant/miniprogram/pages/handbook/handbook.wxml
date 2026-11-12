@@ -1,0 +1,60 @@
+<view class="page">
+  <view class="page-title">学生手册</view>
+  <view class="page-sub">2017 年 9 月版，学生处、教务处编<text wx:if="{{visible}}">。当前可看 {{visible}} 份文件</text></view>
+
+  <view class="search handbook-search">
+    <input value="{{keyword}}" placeholder="搜条文里的词，如：补考、熄灯" maxlength="40" confirm-type="search" bindinput="keywordChange" bindconfirm="search"/>
+    <text class="search-clear" wx:if="{{keyword}}" bindtap="clearSearch">清除</text>
+  </view>
+
+  <view class="state" wx:if="{{loading}}"><view class="state-desc">正在加载目录…</view></view>
+
+  <view class="state" wx:elif="{{offline}}">
+    <view class="state-title">目录没有加载出来</view>
+    <view class="state-desc">{{offlineReason}}</view>
+    <button class="btn btn-ghost" bindtap="reload">重新加载</button>
+  </view>
+
+  <!-- 搜索结果 -->
+  <block wx:elif="{{searched}}">
+    <view class="result-head">「{{searched}}」找到 {{results.length}} 条条文</view>
+    <view wx:if="{{!results.length}}" class="state">
+      <view class="state-title">条文里没有这个词</view>
+      <view class="state-desc">手册的用词可能和平时说法不同。换个词再搜，或者直接去问答页问。</view>
+      <button class="btn btn-ghost" bindtap="askInstead">去问答页问这句</button>
+    </view>
+    <button class="slip" wx:for="{{results}}" wx:key="id" data-id="{{item.id}}" bindtap="openArticle">
+      <view class="slip-main">
+        <view class="slip-article">{{item.article || '正文'}}</view>
+        <view class="slip-doc">《{{item.doc}}》</view>
+        <view class="slip-text">{{item.snippet}}</view>
+      </view>
+      <view class="slip-page">第 {{item.page_start}} 页</view>
+    </button>
+  </block>
+
+  <!-- 目录 -->
+  <block wx:else>
+    <scroll-view class="tabs" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <button class="tab {{category === item ? 'on' : ''}}" wx:for="{{categories}}" wx:key="*this" data-name="{{item}}" bindtap="changeCategory">{{item}}</button>
+    </scroll-view>
+
+    <view class="group" wx:for="{{groups}}" wx:key="category" wx:for-item="group" wx:if="{{category === '全部' || category === group.category}}">
+      <view class="group-title" wx:if="{{category === '全部'}}">{{group.category}}</view>
+      <view class="panel">
+        <button class="row" wx:for="{{group.docs}}" wx:key="index" wx:for-item="doc" data-index="{{doc.index}}" bindtap="openDoc">
+          <view class="row-main">
+            <view class="row-title doc-name">{{doc.name}}</view>
+            <view class="row-desc">第 {{doc.page_start}}–{{doc.page_end}} 页，{{doc.chunks}} 条</view>
+          </view>
+          <view class="chevron"></view>
+        </button>
+      </view>
+    </view>
+
+    <view class="notice handbook-notice" wx:if="{{hidden}}">
+      <view>还有 {{hidden}} 份校内规章需要绑定在校身份后查看。</view>
+      <view class="notice-action" bindtap="openMine">去绑定身份</view>
+    </view>
+  </block>
+</view>

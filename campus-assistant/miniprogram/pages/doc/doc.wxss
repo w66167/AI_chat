@@ -1,0 +1,4 @@
+.doc-title { font-family: var(--serif); font-size: 42rpx; line-height: 1.45; font-weight: 700; }
+.doc-ask { margin-top: 28rpx; }
+.chapter { margin-top: 40rpx; }
+.chapter-title { font-family: var(--serif); font-size: 28rpx; font-weight: 700; color: var(--ink-2); margin-bottom: 16rpx; }

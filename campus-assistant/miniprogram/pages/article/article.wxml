@@ -1,0 +1,38 @@
+<view class="state" wx:if="{{loading}}"><view class="state-desc">正在加载…</view></view>
+
+<view class="state" wx:elif="{{error}}">
+  <view class="state-title">这条条文打不开</view>
+  <view class="state-desc">{{error}}</view>
+  <button class="btn btn-ghost" bindtap="load">重新加载</button>
+</view>
+
+<view class="page" wx:else>
+  <button class="article-doc" bindtap="openDoc">《{{item.doc}}》</button>
+  <view class="article-chapter" wx:if="{{item.chapter}}">{{item.chapter}}<text wx:if="{{item.section}}">　{{item.section}}</text></view>
+
+  <view class="article-body">
+    <view class="article-number">{{item.article || '正文'}}</view>
+    <text class="article-text" selectable="{{true}}">{{item.text}}</text>
+  </view>
+
+  <view class="article-meta">
+    <view>手册第 {{item.page_start}}<text wx:if="{{item.page_end !== item.page_start}}">–{{item.page_end}}</text> 页</view>
+    <view>{{item.kb.name}}，{{item.scope}}</view>
+    <view wx:if="{{item.needs_review}}">这一段是文件的导语，不是正式条款。</view>
+    <view>手册内容与学校文件不符的，以学校文件为准。</view>
+  </view>
+
+  <view class="article-actions">
+    <button class="btn btn-primary" bindtap="ask">就这一条提问</button>
+    <button class="btn btn-ghost" bindtap="copy">复制原文</button>
+  </view>
+
+  <view class="article-turn">
+    <button class="turn" disabled="{{!item.prev}}" data-id="{{item.prev ? item.prev.id : ''}}" bindtap="turn">
+      <view class="turn-label">上一条</view><view class="turn-name">{{item.prev ? (item.prev.article || '正文') : '已是第一条'}}</view>
+    </button>
+    <button class="turn turn-next" disabled="{{!item.next}}" data-id="{{item.next ? item.next.id : ''}}" bindtap="turn">
+      <view class="turn-label">下一条</view><view class="turn-name">{{item.next ? (item.next.article || '正文') : '已是最后一条'}}</view>
+    </button>
+  </view>
+</view>

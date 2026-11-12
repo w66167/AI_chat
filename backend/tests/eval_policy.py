@@ -2,7 +2,11 @@
 """用 150 条评测集给「策略层」打分。
 
 测的不是模型，而是 answer.py 的判断：该答的答了没、该拒的拒了没、该问的问了没。
-产出 predictions.json，交给 scripts/score_eval.py 用同一套规则评分。
+产出 predictions，交给 scripts/score_eval.py 用同一套规则评分。
+
+以学生身份提问（题库都是校内规章的问题），并且不调用大模型：这里量的是检索和策略，
+回答用条文原文。检索走哪条路径由 deps 决定（向量可用就用向量，否则关键词保底），
+两条路径的结果分别写到 predictions_policy.json 和 predictions_policy_lexical.json。
 
     & "..\knowledge_base\.venv\Scripts\python.exe" tests\eval_policy.py
     & "..\knowledge_base\.venv\Scripts\python.exe" ..\knowledge_base\scripts\score_eval.py \
@@ -22,8 +26,11 @@ from app.schemas import AskRequest, HistoryTurn  # noqa: E402
 
 def main():
     cfg = deps.get_config()
-    print('加载检索器（约 12 秒）……')
+    print('加载检索器……')
     retriever = deps.get_retriever()
+    mode = deps.status()['mode']
+    print('检索路径：%s%s' % (mode, '（向量不可用：%s）' % deps.status()['fallback_reason']
+                              if deps.status()['fallback_reason'] else ''))
 
     eval_path = os.path.join(cfg.kb.root, 'data', 'eval_questions.json')
     items = json.load(open(eval_path, encoding='utf-8'))['items']
@@ -39,7 +46,7 @@ def main():
 
         req = AskRequest(question=it['question'], history=history)
         t1 = time.perf_counter()
-        resp = answer.respond(req, cfg=cfg, retriever=retriever)
+        resp = answer.respond(req, cfg=cfg, retriever=retriever, identity='student', generate=False)
         cost = (time.perf_counter() - t1) * 1000
 
         top3 = [c['chunk_id'] for c in resp['citations']]
@@ -48,7 +55,7 @@ def main():
         rows.append((it['id'], it['type'], it['question'], resp['behavior'],
                      round(resp['confidence'], 2), len(top3), int(cost)))
 
-    out = os.path.join(cfg.kb.root, 'data', 'predictions_policy.json')
+    out = os.path.join(cfg.kb.root, 'data', 'predictions_policy%s.json' % ('' if mode == 'vector' else '_lexical'))
     json.dump(preds, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
     # 行为分布：能直接看出阈值是不是偏严或偏松

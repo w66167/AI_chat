@@ -1,0 +1,12 @@
+.history-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18rpx; }
+.history-clear { color: var(--seal); font-size: 25rpx; padding: 6rpx 0 6rpx 20rpx; }
+
+.record { border-bottom: 1rpx solid var(--line); }
+.record:last-child { border-bottom: 0; }
+.record-head { display: flex; align-items: center; gap: 20rpx; padding: 28rpx; width: 100%; }
+.record-question { font-size: 28rpx; }
+.chevron-down { transform: rotate(135deg); }
+.record-body { padding: 0 28rpx 28rpx; }
+.record-answer { display: block; font-size: 27rpx; line-height: 1.85; color: var(--ink-2); white-space: pre-wrap; word-break: break-all; margin-bottom: 20rpx; }
+.record-body .slip { background: var(--paper); }
+.record-again { color: var(--green); font-size: 25rpx; margin-top: 20rpx; padding: 6rpx 0; }

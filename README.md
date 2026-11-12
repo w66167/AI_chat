@@ -1,8 +1,10 @@
 # 校园智能问答系统
 
-把《杭州电子科技大学学生手册》（206 页、28 篇文件）变成**可检索、可追溯、会拒答**的问答服务，前端是一个微信小程序。
+把《杭州电子科技大学学生手册》（2017 年 9 月版，206 页、28 份文件）做成一个微信小程序里的问答助手。
 
-回答不是模型瞎编的，而是从手册原文里检索出来的，并且**每条都带文件名、条号和页码**；查不到就明说查不到，并给出该去哪个官方渠道问。
+学生用平常的话提问，后端从手册里检索出相关条文，交给大模型整理成直接回答问题的话，
+并且**每条回答都标明出自哪份文件、哪一条、第几页，点开就能核对原文**。
+查不到就明说查不到；要求代办或查个人数据的，说明不办并指明该去哪里。
 
 ---
 
@@ -10,19 +12,17 @@
 
 ```
 问：宿舍几点熄灯？
-答：严格遵守学校规定的作息时间……自主熄灯时间 22:50、统一熄灯 23:00……
-    夏季、冬季通宵供电。
-出处：《杭州电子科技大学学生住宿管理规定》第二十二条 · 第174页
-耗时：1.0 秒
+答：（大模型依据条文整理的回答）
+依据以下条文整理：第二十二条 《杭州电子科技大学学生住宿管理规定》 第 174 页   ← 可点开看原文
 
 问：图书馆几点开门？
-答：当前知识库（学生手册 2017 年版）里没有足够可靠的依据回答这个问题，我不做推测。
-耗时：0.7 秒
+答：当前检索的知识库（国家教育法规、学生手册）里没有足够可靠的依据回答这个问题，我不做推测。
 
 问：帮我报修一下宿舍漏水。
-答：这里只提供制度和流程说明，不代为受理、不派发工单、不承诺办理结果。
-耗时：0.002 秒   ← 越界请求直接拦截，不进检索
+答：这里只提供制度和流程说明，不代为受理、不派发工单、不承诺办理结果。   ← 越界请求直接拦截，不进检索
 ```
+
+没有配置大模型密钥时，第一问的回答是条文原文（其余不变）。
 
 ## 能力与边界
 
@@ -73,14 +73,35 @@ AI_chat/
 │  ├─ scripts/                  解析 PDF、建索引、评测、打分、自检
 │  └─ requirements.txt
 ├─ backend/                     问答 API（Python 标准库 + pydantic）
+│  ├─ app/auth.py               登录、令牌、身份绑定
 │  ├─ app/answer.py             策略层：越界/澄清/拒答/作答
+│  ├─ app/llm.py                生成层：调用大模型并校验输出
+│  ├─ app/handbook.py           手册目录、条文原文、搜索
 │  ├─ app/server.py             HTTP 路由
-│  └─ tests/                    冒烟测试、策略评测、小程序契约测试
-└─ campus-assistant/            微信小程序
-   ├─ miniprogram/pages/        首页 / 问答 / 我的 / 指南 / 详情 / 工作台
-   ├─ miniprogram/utils/api.js  唯一的联网入口
-   └─ scripts/check.js          静态检查（语法、BOM、联网规则、离线回退）
+│  └─ tests/                    路由、服务、小程序联调、策略评测
+└─ campus-assistant/            微信小程序（不带知识内容，全部来自后端）
+   ├─ miniprogram/pages/        首页 / 问答 / 手册 / 我的 / 文件 / 条文原文 / 提问记录
+   ├─ miniprogram/utils/api.js  唯一的联网入口：登录、令牌、全部接口
+   └─ scripts/check.js          本地检查（结构、语法、联网规则、本机状态逻辑）
 ```
+
+## 最快跑起来（不需要显卡）
+
+```powershell
+cd backend
+pip install -r requirements.txt
+python run.py --port 8000
+```
+
+然后用微信开发者工具导入 `campus-assistant` 目录并编译。这样跑起来的是最低配置：
+关键词检索、回答为条文原文、开发模式登录。**想要像样的效果，按 [backend/README.md](backend/README.md) 配三样东西**：
+
+| 配置 | 不配时 | 配了之后 |
+| --- | --- | --- |
+| 大模型密钥（DeepSeek / 通义千问 / 智谱） | 回答是条文原文 | 回答是依据条文整理的自然语言 |
+| 小程序 AppID 与 AppSecret | 按设备发本地账号 | 真实微信登录 |
+| 向量模型与索引（下面的复现步骤） | 关键词检索，口语问法容易查不到 | 语义检索，前 3 名命中 89.1% |
+
 
 ---
 
@@ -179,15 +200,16 @@ cd backend          # 若上一步已在 backend 目录则跳过
 ..\knowledge_base\.venv\Scripts\python.exe run.py --port 8000
 ```
 
-看到「模型预热完成」约需 25–30 秒（预热期间 `/v1/health` 返回 `status=warming`）。
+启动日志里看到「检索器就绪（vector）」说明向量检索已生效（显示 `lexical` 则是退到了关键词检索，原因在上一行）。
+加载模型约需 25–30 秒，期间 `/v1/health` 返回 `status=warming`。
 
 ```powershell
 # 另开一个窗口验证
 curl.exe -s http://127.0.0.1:8000/v1/health
-curl.exe -s -X POST http://127.0.0.1:8000/v1/ask -H "Content-Type: application/json" -d "{\"question\":\"宿舍几点熄灯\"}"
 ```
 
-也可以直接打开 <http://127.0.0.1:8000/docs> 看接口说明。
+接口说明在 <http://127.0.0.1:8000/docs>。问答接口需要先登录拿令牌，不带令牌按游客处理（只能查国家教育法规）。
+大模型密钥和微信登录的配置见 [backend/README.md](backend/README.md)。
 
 ### 第 7 步：跑小程序
 
@@ -196,29 +218,34 @@ curl.exe -s -X POST http://127.0.0.1:8000/v1/ask -H "Content-Type: application/j
 3. AppID 选「测试号」或游客模式；后端服务选「不使用云服务」
 4. 点「编译」
 
-首页右上角应显示「**● 在线**」。如果显示「本地」，说明没连上后端——小程序会自动回退到本机示例知识（按身份 20 / 21 / 22 条），页面不会白屏。
+首页顶上应显示「游客，可查国家教育法规」。如果显示「连不上问答服务」，说明后端没启动或地址不对
+（`campus-assistant/miniprogram/utils/api.js` 的 `BASE_URL`）。小程序不带知识内容，后端不可用时不会给出回答。
 
-小程序里可以在「我的」切换三种**使用者**身份（游客 / 学生 / 教师、行政人员）。
-**每个身份有自己的知识库**：游客＝校园公开办事指南，学生＝＋学生手册，教师＝＋教职工手册；
-后端的 `/v1/ask` 按 `scope.identity_type` 选库检索，回答里标注「知识库 · 文档 · 条号/页码」。
-知识库注册表在 `knowledge_base/data/libraries.json`，三个库里只有学生手册有真实语料，教职工手册内容待补。
+在「我的」页绑定身份（游客 / 学生 / 教师、行政人员），身份决定能查什么：
+游客＝国家教育法规（手册前 3 份文件），学生＝＋学生手册 25 份校内规章，教师另有教职工手册（内容待补）。
+**身份由后端按登录令牌认定**，客户端改请求参数冒充不了；但目前身份是自行声明的，没有接学校统一身份认证。
 
-**知识维护人员与知识审核员不在小程序里**（它们是对系统负责而不是使用系统的角色），
-职责由管理端工具 `knowledge_base/scripts/kb_admin.py` 承担：起草 → 提交 → 驳回/发布 + 审计，
-含「禁止作者自审」与版本递增。细节见 [campus-assistant/README.md](campus-assistant/README.md#身份与知识库v05)。
+**知识维护人员与知识审核员不在小程序里**，职责由管理端工具 `knowledge_base/scripts/kb_admin.py` 承担：
+起草 → 提交 → 驳回/发布 + 审计，含「禁止作者自审」与版本递增。
 
 改完代码想先做静态检查，不打开工具也行：
 
 ```powershell
 cd campus-assistant
-node scripts/check.js          # 语法、BOM、联网规则、离线回退、身份与知识库路由、用户端无管理接口
-python scripts/check-wxml.py   # WXML 标签闭合（可选）
+node scripts/check.js                        # 小程序本地检查（不需要后端）
+python scripts/check-wxml.py                 # WXML 标签闭合
+
+cd ..\backend
+python tests\test_libraries.py               # 按身份选库与出处标注（11 项）
+python tests\test_service.py                 # 生成层、登录与身份、手册浏览、HTTP 接口（24 项）
+node tests\smoke_miniprogram.js              # 小程序七个页面接真实后端走完整流程
 
 cd ..\knowledge_base
-python scripts\export_libraries.py --check    # 注册表前后端是否同步
-python scripts\kb_admin.py selftest           # 管理端知识维护/审核规则（纯内存，不需要模型）
-python ..\backend\tests\test_libraries.py     # 后端按身份选库与出处标注（不需要模型）
+python scripts\export_libraries.py --check   # 注册表前后端是否同步
+python scripts\kb_admin.py selftest          # 管理端知识维护/审核规则
 ```
+
+这些都不需要显卡、模型和网络。
 
 演示顺序与讲解要点见 [campus-assistant/DEMO.md](campus-assistant/DEMO.md)。
 
@@ -249,6 +276,9 @@ python ..\backend\tests\test_libraries.py     # 后端按身份选库与出处�
 | 纯检索 Top-3（真实链路） | 89.1%（98/110） | ≥ 90% |
 | 端到端通过率 | 81.8%（90/110） | ≥ 90% |
 
+> 上表是「向量 + 重排、回答为条文原文」的成绩，在带显卡的机器上测得，接入大模型和关键词保底路径之后没有重测。
+> 关键词保底路径的实测成绩见 [backend/README.md](backend/README.md)。
+>
 > 90.9% 与 89.1% 是两个口径：前者是离线检索对比（只比检索），后者走真实后端（多轮题只在问题短于 24 字时才拼上一轮，且拒答算失败）。**验收以 89.1% 为准。**
 
 ### 延迟（单机 RTX 4060 Laptop）
@@ -319,10 +349,14 @@ CDN 会断流。`build_index.py` 重跑会跳过已下完的文件；若某个�
 
 文件带了 UTF-8 BOM。`node scripts/check.js` 会检出所有带 BOM 的文件，用无 BOM 的方式重存即可（VS Code 右下角编码选 `UTF-8`）。
 
-**7. 小程序一直显示「本地」而不是「在线」**
+**7. 小程序显示「连不上问答服务」**
 
-按顺序排查：后端是否在跑（`/v1/health` 能返回 JSON）→ `model_loaded` 是否为 `true`（`warming` 表示还在加载）→
+按顺序排查：后端是否在跑（`/v1/health` 能返回 JSON）→ 小程序 `utils/api.js` 的 `BASE_URL` 端口是否一致 →
 开发者工具「详情 → 本地设置」中「不校验合法域名」是否勾选（项目已设 `urlCheck: false`）→ 控制台是否有 `request:fail`。
+
+**7b. 回答是条文原文，不是整理过的话**
+
+没配大模型密钥，或者调用失败后降级了。看 `/v1/health` 的 `llm`：`enabled` 是否为 `true`，`last_error` 写了什么。
 
 **8. `无法加载文件 ... 因为在此系统上禁止运行脚本`**
 
@@ -370,9 +404,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup_env.ps1
 | --- | --- |
 | [knowledge_base/README.md](knowledge_base/README.md) | 语料抽取的坑、切块规则、评测集构成、检索调优过程 |
 | [knowledge_base/ARCHITECTURE.md](knowledge_base/ARCHITECTURE.md) | 检索层分层、索引指纹、为什么不用向量库 |
-| [backend/README.md](backend/README.md) | API 契约、策略层判断顺序、阈值标定依据、延迟优化 |
-| [campus-assistant/README.md](campus-assistant/README.md) | 小程序界面结构、在线/离线双模式、字段映射 |
-| [campus-assistant/DEMO.md](campus-assistant/DEMO.md) | 5 分钟演示脚本与讲解要点 |
+| [backend/README.md](backend/README.md) | 三项配置、接口、登录与身份、生成层的约束、两条检索路径 |
+| [campus-assistant/README.md](campus-assistant/README.md) | 小程序页面、登录与身份、界面约定、检查方法 |
+| [campus-assistant/DEMO.md](campus-assistant/DEMO.md) | 演示脚本与讲解要点 |
 
 ## 复现时间预算
 

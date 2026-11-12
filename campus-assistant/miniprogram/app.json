@@ -2,26 +2,28 @@
   "pages": [
     "pages/home/home",
     "pages/chat/chat",
-    "pages/services/services",
+    "pages/handbook/handbook",
     "pages/mine/mine",
-    "pages/detail/detail"
+    "pages/doc/doc",
+    "pages/article/article",
+    "pages/history/history"
   ],
   "window": {
     "navigationBarTitleText": "校园知答",
-    "navigationBarBackgroundColor": "#f5f7fa",
+    "navigationBarBackgroundColor": "#f4f6f3",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f5f7fa"
+    "backgroundColor": "#f4f6f3"
   },
   "tabBar": {
-    "color": "#83909d",
+    "color": "#93a09b",
     "selectedColor": "#176b5b",
     "backgroundColor": "#ffffff",
     "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/home/home", "text": "首页" },
-      { "pagePath": "pages/chat/chat", "text": "问一问" },
-      { "pagePath": "pages/services/services", "text": "办事指南" },
-      { "pagePath": "pages/mine/mine", "text": "我的" }
+      { "pagePath": "pages/home/home", "text": "首页", "iconPath": "assets/tab-home.png", "selectedIconPath": "assets/tab-home-on.png" },
+      { "pagePath": "pages/chat/chat", "text": "问答", "iconPath": "assets/tab-chat.png", "selectedIconPath": "assets/tab-chat-on.png" },
+      { "pagePath": "pages/handbook/handbook", "text": "手册", "iconPath": "assets/tab-book.png", "selectedIconPath": "assets/tab-book-on.png" },
+      { "pagePath": "pages/mine/mine", "text": "我的", "iconPath": "assets/tab-mine.png", "selectedIconPath": "assets/tab-mine-on.png" }
     ]
   },
   "style": "v2",

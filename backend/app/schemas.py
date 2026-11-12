@@ -144,6 +144,9 @@ class AskResponse(BaseModel):
     kb_gap: bool = Field(False, description='为真表示该身份的知识库都没接入检索，客户端应改用本机知识')
     kb_gap_reason: str = Field('', description='kb_gap 为真时的原因说明，可直接展示给用户')
     latency_ms: int = Field(0, description='服务端处理耗时')
+    answer_mode: str = Field('', description='generated=大模型依据条文组织的回答；excerpt=条文原文；空=未作答')
+    model: str = Field('', description='生成回答所用的模型，仅 answer_mode=generated 时有值')
+    identity_type: str = Field('', description='服务端认定的提问者身份（由登录令牌推导）')
 
 
 # ---------------------------------------------------------------- 反馈

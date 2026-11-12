@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """回答策略：决定「答 / 澄清 / 拒答 / 拒绝越界」，并拼装带出处的答案。
 
-这一层刻意不接大模型：先用条文原文 + 出处拼装，保证每一句都有依据。
-接 7B 之后，这一层仍然是兜底路径（NFR-02 要求模型不可用时降级）。
+两步走：先由这一层的规则和检索置信度决定「该不该答」，该答时再交给生成层（llm.py）
+把条文组织成一句直接回答问题的话。生成层不可用、或者它的输出通不过校验时，
+退回「条文原文 + 出处」——这条路径不依赖任何外部服务，是 NFR-02 要求的降级。
 
 四条规则的依据：
   FR-11 置信度三档 → 高分直接答、中分澄清、低分拒答
@@ -13,7 +14,7 @@
 import math
 import re
 
-from . import deps, libraries, session
+from . import deps, libraries, llm, session
 
 # 越界请求：代办理、查个人数据、投诉转办、催办（FR-20 / FR-03）
 BOUNDARY_RULES = [
@@ -124,15 +125,36 @@ def _citation(chunk, kb_id):
 
 
 def _history_query(question, req, session_id):
-    """多轮：把上一轮问题拼进检索查询，否则「周末也这样吗」单句没有信息。"""
+    """多轮：把上一轮问题拼进检索查询，否则「周末也这样吗」单句没有信息。
+
+    返回 (检索用的查询, 上一轮问题)。上一轮问题还要交给生成层，它才知道「那」指什么。
+    """
     prev = None
     if req.history:
         prev = req.history[-1].question
     elif session_id:
         prev = session.last_question(session_id)
     if prev and len(question) <= 24:
-        return prev + ' ' + question
-    return question
+        return prev + ' ' + question, prev
+    return question, ''
+
+
+def _confidence_fn(retriever):
+    """检索器自带 confidence() 就用它的（关键词检索的分数没有上界，量纲和重排模型不同）。"""
+    return getattr(retriever, 'confidence', None) or _sigmoid
+
+
+def _policy(cfg, retriever, generating):
+    """阈值随检索路径变：关键词检索用自己的一套；其中没有生成层把关时门槛更高。"""
+    policy = dict(cfg['answer_policy'])
+    if getattr(retriever, 'confidence', None):
+        lexical = dict(cfg.get('lexical_policy') or {})
+        strict = lexical.pop('refuse_below_excerpt', None)
+        policy.update(lexical)
+        if not generating and strict is not None:
+            policy['refuse_below'] = strict
+            policy['clarify_below'] = max(policy['clarify_below'], strict)
+    return policy
 
 
 def _versions(items):
@@ -149,9 +171,11 @@ def _resp(base, **kwargs):
     return out
 
 
-def respond(req, cfg=None, retriever=None):
+def respond(req, cfg=None, retriever=None, identity=None, generate=None):
+    """identity：服务端从登录令牌推导出的身份；不传时才用请求体里的（测试与评测脚本）。
+    generate：生成函数，默认 llm.generate；测试里传假的，不用真的调模型。"""
     cfg = cfg or deps.get_config()
-    identity = req.scope.identity_type.value
+    identity = identity or req.scope.identity_type.value
     session_id = req.session_id or session.new_id()
     question = req.question.strip()
 
@@ -164,6 +188,8 @@ def respond(req, cfg=None, retriever=None):
         'knowledge_bases': [libraries.brief(item) for item in searchable],
         'kb_pending': [item['name'] for item in pending],
         'kb_gap': False, 'kb_gap_reason': '',
+        # answer_mode：generated = 大模型依据条文组织的回答；excerpt = 条文原文；空 = 没有作答
+        'answer_mode': '', 'model': '', 'identity_type': identity,
     }
 
     # ② 身份对应的知识库一个都没接入检索：如实说明，不拿别人的知识库硬答
@@ -179,7 +205,10 @@ def respond(req, cfg=None, retriever=None):
                      knowledge_version='', latency_ms=0)
 
     retriever = retriever or deps.get_retriever()
-    policy = cfg['answer_policy']
+    if generate is None:               # 传 False 表示明确不用生成（测试、评测检索本身时）
+        generate = llm.generate if llm.settings(cfg) else None
+    policy = _policy(cfg, retriever, bool(generate))
+    confidence_of = _confidence_fn(retriever)
     chunks = retriever.chunks
 
     def refuse(confidence=0.0):
@@ -211,17 +240,18 @@ def respond(req, cfg=None, retriever=None):
 
     # ⑤ 检索：先取候选，再按「身份可检索的知识库」过滤，最后取 top_k。
     #    先过滤后取 top_k 而不是反过来——否则范围外的块会白占名额，出现「明明有权限却查不到」。
-    query = _history_query(question, req, req.session_id)
+    query, previous = _history_query(question, req, req.session_id)
     allowed = [item['id'] for item in searchable]
-    pool = max(cfg.kb['retrieval']['top_k'], cfg.kb['retrieval'].get('candidates', 20))
-    hits = libraries.filter_hits(retriever.search(query, k=pool), allowed)
-    hits = hits[:cfg.kb['retrieval']['top_k']]
+    top_k = cfg.kb['retrieval']['top_k']
+    llm_cfg = cfg.get('llm') or {}
+    pool = max(top_k, cfg.kb['retrieval'].get('candidates', 20))
+    ranked = libraries.filter_hits(retriever.search(query, k=pool), allowed)
+    hits = ranked[:top_k]
     if not hits:
         return refuse()
 
     top_id, top_score = hits[0]
-    confidence = _sigmoid(top_score)
-    second = _sigmoid(hits[1][1]) if len(hits) > 1 else 0.0
+    confidence = confidence_of(top_score)
 
     # ⑥ 低置信 → 拒答（FR-12）
     if confidence < policy['refuse_below']:
@@ -242,14 +272,37 @@ def respond(req, cfg=None, retriever=None):
                      boundary=None, degraded=False,
                      knowledge_version=_versions(searchable), latency_ms=0)
 
-    # ⑧ 正常作答：条文原文 + 出处；时效类问题追加「以现行文件为准」
+    # ⑧ 生成：把前几名条文交给大模型组织回答。它只能引用给它的条文，
+    #    也可以判断「这些条文答不了」——那就拒答，不硬凑。
     top = chunks[top_id]
-    answer = '%s\n\n出处：%s' % (top.text, top.source)
+    suggestions = _suggestions(question, policy['max_suggestions'])
+    generated = None
+    degraded = False
+    if generate:
+        passages = [{'id': cid, 'source': chunks[cid].source, 'text': chunks[cid].text}
+                    for cid, _ in ranked[:max(top_k, int(llm_cfg.get('passages', 5)))]]
+        try:
+            generated = generate(cfg, question, passages, previous)
+        except llm.LLMError as e:
+            degraded = True            # 生成不可用或输出不可信 → 退回条文原文
+            deps.note_llm_error(str(e))
+        if generated is not None and not generated['answerable']:
+            return refuse(confidence)
+
+    if generated:
+        answer = generated['answer']
+        citations = [_citation(chunks[cid], libraries.kb_of_chunk(cid)) for cid in generated['cited']]
+        suggestions = generated['followups'] or suggestions
+        mode, model = 'generated', generated.get('model', '')
+    else:
+        # ⑨ 降级 / 未启用生成：条文原文 + 出处
+        answer = '%s\n\n出处：%s' % (top.text, top.source)
+        citations = [_citation(chunks[cid], libraries.kb_of_chunk(cid)) for cid, _ in hits]
+        mode, model = 'excerpt', ''
     behavior = 'answer'
-    if CAVEAT_RE.search(question):
+    if CAVEAT_RE.search(question):     # 时效类问题追加「以现行文件为准」
         answer += CAVEAT_TEXT
         behavior = 'answer_with_caveat'
-    citations = [_citation(chunks[cid], libraries.kb_of_chunk(cid)) for cid, _ in hits]
     # 本次能访问、但还没接入检索的知识库要在答案末尾说清楚，避免「以为查过了全部知识」
     if pending:
         answer += '\n\n（说明：你的身份还可以访问「%s」，该知识库尚未接入检索，本次没有检索它。）' \
@@ -257,8 +310,8 @@ def respond(req, cfg=None, retriever=None):
     return _resp(base,
                  behavior=behavior, answer=answer, citations=citations,
                  confidence=round(confidence, 3),
-                 suggestions=_suggestions(question, policy['max_suggestions']),
-                 boundary=None, degraded=False,
+                 suggestions=suggestions[:policy['max_suggestions']],
+                 boundary=None, degraded=degraded, answer_mode=mode, model=model,
                  knowledge_version=_versions(searchable), latency_ms=0)
 
 

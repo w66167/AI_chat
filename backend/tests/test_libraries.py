@@ -44,7 +44,12 @@ class FakeRetriever:
 def ask(question, identity, retriever):
     request = AskRequest(question=question, session_id='test-session',
                          scope={'identity_type': identity})
-    return answer.respond(request, retriever=retriever)
+    # generate=False：这里只测路由与出处，不调用大模型（生成层的测试在 test_service.py）
+    return answer.respond(request, retriever=retriever, generate=False)
+
+
+DORM = 'hb-510'      # 《学生住宿管理规定》第二十二条，属于学生手册（校内规章）
+LAW = 'hb-002'       # 《普通高等学校学生管理规定》第一条，属于国家教育法规
 
 
 def load():
@@ -104,18 +109,26 @@ def test_identity_routing():
         ['public-guide', 'student-handbook', 'staff-handbook']
     assert [i['id'] for i in libraries.for_identity('staff')] == \
         ['public-guide', 'student-handbook', 'staff-handbook']
-    # 只有学生手册真的建了索引，公开指南与教职工手册都还没有
-    assert [i['id'] for i in libraries.searchable_for('student')] == ['student-handbook']
-    assert [i['id'] for i in libraries.searchable_for('guest')] == []
-    # 公开指南与教职工手册都还没接入检索，要如实列出来
-    assert [i['id'] for i in libraries.pending_for('teacher')] == ['public-guide', 'staff-handbook']
+    # 国家教育法规与学生手册共用一份语料、都已接入检索；教职工手册内容待补
+    assert [i['id'] for i in libraries.searchable_for('student')] == ['public-guide', 'student-handbook']
+    assert [i['id'] for i in libraries.searchable_for('guest')] == ['public-guide']
+    assert [i['id'] for i in libraries.pending_for('teacher')] == ['staff-handbook']
 
 
 def test_chunk_owner():
     """知识块要能反查出所属知识库，否则按身份过滤无从谈起。"""
     chunks = load()
-    assert libraries.kb_of_chunk(chunks[0].id) == 'student-handbook'
+    # 两个知识库共用 handbook_chunks.jsonl，按 doc_index 划分：前三份文件是国家法规
+    assert libraries.kb_of_chunk(chunks[0].id) == 'public-guide'
+    assert libraries.kb_of_chunk(LAW) == 'public-guide'
+    assert libraries.kb_of_chunk(DORM) == 'student-handbook'
     assert libraries.kb_of_chunk('hb-not-exist') is None
+    owner = libraries.chunk_owner_map()
+    assert len(owner) == len(chunks), '每个条文块都要归属到某个知识库'
+    counts = {}
+    for kb_id in owner.values():
+        counts[kb_id] = counts.get(kb_id, 0) + 1
+    assert counts == {'public-guide': 119, 'student-handbook': 467}, counts
 
 
 def test_filter_hits():
@@ -133,20 +146,30 @@ def test_filter_hits():
 
 # ---------------------------------------------------------------- 回答行为
 
-def test_guest_has_no_searchable_library():
-    """游客的知识库（公开指南）还没接入检索：要如实说明，而不是拿学生手册冒充。"""
-    resp = ask('宿舍几点熄灯', 'guest', FakeRetriever(load()))
-    assert resp['kb_gap'] is True
-    assert resp['knowledge_bases'] == []
-    assert '公开办事指南' in resp['kb_gap_reason']
+def test_guest_only_reaches_public_law():
+    """游客只能查国家教育法规：检索器把校内规章排在最前，也不能出现在游客的回答里。"""
+    resp = ask('对处分不服怎么申诉', 'guest', FakeRetriever(load(), ids=[DORM, LAW]))
+    assert resp['kb_gap'] is False
+    assert [kb['id'] for kb in resp['knowledge_bases']] == ['public-guide']
+    assert [c['chunk_id'] for c in resp['citations']] == [LAW]
+    assert resp['citations'][0]['kb']['name'] == '国家教育法规'
+    assert DORM not in json.dumps(resp, ensure_ascii=False)
+
+
+def test_guest_is_refused_when_only_restricted_chunks_match():
+    """命中的全是校内规章时，游客得到的是拒答，而且话术里不提学生手册（不透露受限内容是否存在）。"""
+    resp = ask('宿舍几点熄灯', 'guest', FakeRetriever(load(), ids=[DORM]))
     assert resp['behavior'] == 'refuse_noanswer'
     assert resp['citations'] == []
+    assert '学生手册' not in resp['answer']
 
 
 def test_student_answer_carries_library():
-    resp = ask('宿舍几点熄灯', 'student', FakeRetriever(load()))
+    resp = ask('宿舍几点熄灯', 'student', FakeRetriever(load(), ids=[DORM, LAW]))
     assert resp['behavior'] in ('answer', 'answer_with_caveat')
-    assert resp['knowledge_bases'][0]['id'] == 'student-handbook'
+    # 学生同时检索国家教育法规与学生手册；每条引用各自标明出自哪个库
+    assert [kb['id'] for kb in resp['knowledge_bases']] == ['public-guide', 'student-handbook']
+    assert [c['kb']['id'] for c in resp['citations']] == ['student-handbook', 'public-guide']
     assert resp['citations'], '正常作答必须带引用'
     citation = resp['citations'][0]
     assert citation['kb']['id'] == 'student-handbook'
@@ -160,8 +183,8 @@ def test_student_answer_carries_library():
 
 def test_teacher_is_told_about_pending_library():
     """教师还能访问教职工手册，但它没接入检索——必须在答案里声明没查它。"""
-    resp = ask('宿舍几点熄灯', 'teacher', FakeRetriever(load()))
-    assert resp['kb_pending'] == ['校园公开办事指南', '教职工手册']
+    resp = ask('宿舍几点熄灯', 'teacher', FakeRetriever(load(), ids=[DORM]))
+    assert resp['kb_pending'] == ['教职工手册']
     assert '教职工手册' in resp['answer']
     assert '尚未接入检索' in resp['answer']
 
