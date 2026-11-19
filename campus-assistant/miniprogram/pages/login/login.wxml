@@ -1,0 +1,32 @@
+<view class="page login-page">
+  <view class="welcome">
+    <view class="brand-mark">知</view>
+    <view class="page-title">欢迎使用校园知答</view>
+    <view class="page-sub">查阅校园制度，找到有出处的回答。</view>
+  </view>
+
+  <view class="login-form">
+    <view class="section-head"><text class="section-title">选择登录身份</text></view>
+    <view class="role-list">
+      <button class="role-option {{selectedRole === item.identityType ? 'role-selected' : ''}}" wx:for="{{roles}}" wx:key="id" data-identity="{{item.identityType}}" disabled="{{busy || resuming}}" bindtap="chooseRole">
+        <view class="role-avatar">{{item.avatar}}</view>
+        <view class="role-main">
+          <view class="role-name">{{item.name}}</view>
+          <view class="role-desc">{{item.description}}</view>
+        </view>
+        <view class="role-radio"><view class="role-radio-dot" wx:if="{{selectedRole === item.identityType}}"></view></view>
+      </button>
+    </view>
+
+    <view class="teacher-code panel" wx:if="{{selectedRole === 'teacher' && !resuming}}">
+      <view class="code-label">教师 / 行政人员口令</view>
+      <view class="code-help">管理员设置了身份口令时，请输入获取的口令；未设置时可直接登录。</view>
+      <input class="code-input" value="{{code}}" placeholder="输入身份口令（如需）" password="{{true}}" maxlength="128" disabled="{{busy}}" confirm-type="done" bindinput="codeChange" bindconfirm="submit"/>
+    </view>
+
+    <view class="login-error notice" wx:if="{{error}}">{{error}}</view>
+    <button class="btn btn-primary login-submit" loading="{{busy}}" disabled="{{busy}}" bindtap="submit">{{busy ? '正在登录' : resuming ? '重试登录' : selectedRole === 'guest' ? '以游客身份进入' : '登录并进入'}}</button>
+    <button class="btn btn-plain" wx:if="{{resuming && !busy && error}}" bindtap="resetLogin">退出并重新选择</button>
+    <view class="login-note">登录身份决定可查阅的知识库范围。如需使用其他身份，请先退出登录。</view>
+  </view>
+</view>

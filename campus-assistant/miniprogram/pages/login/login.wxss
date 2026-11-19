@@ -1,0 +1,23 @@
+.login-page { padding-top: 64rpx; padding-bottom: 64rpx; }
+.welcome { margin-bottom: 54rpx; }
+.brand-mark { width: 88rpx; height: 88rpx; line-height: 88rpx; margin-bottom: 28rpx; border-radius: 22rpx; background: var(--green); color: #fff; text-align: center; font-family: var(--serif); font-size: 46rpx; font-weight: 700; }
+.welcome .page-title { font-size: 42rpx; }
+.welcome .page-sub { margin-top: 14rpx; }
+.role-list { display: flex; flex-direction: column; gap: 16rpx; }
+.login-page .role-list .role-option { width: 100%; margin: 0; display: flex; align-items: center; gap: 20rpx; padding: 26rpx 24rpx; border: 2rpx solid var(--line); border-radius: 18rpx; background: var(--card); }
+.login-page .role-list .role-selected { border-color: var(--green); background: var(--green-soft); }
+.role-avatar { width: 68rpx; height: 68rpx; line-height: 68rpx; border-radius: 50%; background: var(--paper); color: var(--green); text-align: center; font-family: var(--serif); font-size: 32rpx; font-weight: 700; flex-shrink: 0; }
+.role-selected .role-avatar { background: var(--green); color: #fff; }
+.role-main { flex: 1; min-width: 0; }
+.role-name { font-size: 29rpx; font-weight: 600; }
+.role-desc { margin-top: 6rpx; font-size: 23rpx; color: var(--ink-2); line-height: 1.65; }
+.role-radio { width: 32rpx; height: 32rpx; border: 2rpx solid var(--line); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--card); flex-shrink: 0; }
+.role-selected .role-radio { border-color: var(--green); }
+.role-radio-dot { width: 16rpx; height: 16rpx; border-radius: 50%; background: var(--green); }
+.teacher-code { margin-top: 24rpx; padding: 26rpx; }
+.code-label { font-size: 26rpx; font-weight: 600; }
+.code-help { margin-top: 8rpx; font-size: 23rpx; color: var(--ink-2); line-height: 1.7; }
+.code-input { height: 88rpx; margin-top: 18rpx; padding: 0 22rpx; background: var(--paper); border: 1rpx solid var(--line); border-radius: 12rpx; font-size: 28rpx; }
+.login-error { margin-top: 24rpx; }
+.login-page .login-form .login-submit { width: 100%; margin-top: 32rpx; }
+.login-note { margin-top: 20rpx; color: var(--ink-2); font-size: 23rpx; line-height: 1.8; text-align: center; }
