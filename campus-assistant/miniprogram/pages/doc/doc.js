@@ -10,6 +10,7 @@ Page({
   },
 
   load() {
+    if (!api.requireLogin()) return;
     this.setData({ loading: true, error: '' });
     api.doc(this.index).then((res) => {
       if (!res.ok) return this.setData({ loading: false, error: res.error });

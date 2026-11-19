@@ -2,8 +2,8 @@
 
 <view class="state" wx:elif="{{needIdentity}}">
   <view class="state-title">游客不保存提问记录</view>
-  <view class="state-desc">绑定在校身份后，问过的问题会保存下来，换手机也能看到。</view>
-  <button class="btn btn-ghost" bindtap="openMine">去绑定身份</button>
+  <view class="state-desc">以在校身份登录后，问过的问题会保存下来，换手机也能看到。</view>
+  <button class="btn btn-ghost" bindtap="openLogin">以在校身份登录</button>
 </view>
 
 <view class="state" wx:elif="{{error}}">

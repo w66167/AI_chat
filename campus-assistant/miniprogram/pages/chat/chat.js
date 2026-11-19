@@ -20,6 +20,7 @@ Page({
   },
 
   onShow() {
+    if (!api.requireLogin()) return;
     this.refresh();
     this.loadStarters();
     const app = getApp().globalData;
@@ -135,5 +136,5 @@ Page({
     });
   },
 
-  openMine() { wx.switchTab({ url: '/pages/mine/mine' }); }
+  openLogin() { api.relogin(); }
 });

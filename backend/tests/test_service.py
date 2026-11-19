@@ -378,15 +378,35 @@ def test_search_respects_identity():
 
 
 def test_suggestions_by_identity():
-    guest, student = handbook.suggestions('guest'), handbook.suggestions('student')
+    guest, student, teacher = [handbook.suggestions(identity) for identity in ('guest', 'student', 'teacher')]
     assert LAW_APPEAL in guest['questions'] and guest['groups'] == []
     assert len(student['questions']) == 8 and len(student['groups']) == 7
     assert sum(len(g['questions']) for g in student['groups']) == 30
-    # 给游客的示例问题必须真的能在游客范围内答出来（最差的组合下也要能）
-    for q in guest['questions']:
-        resp = ask(q, identity='guest')
-        assert resp['behavior'] == 'answer', q
-        assert all(c['kb']['id'] == 'public-guide' for c in resp['citations']), q
+    assert len(teacher['questions']) == 8
+    assert {g['category'] for g in teacher['groups']} == {'学籍管理', '成绩与考试', '纪律与申诉'}
+    assert not set(teacher['questions'][:5]) & set(student['questions'][:5]), '教师和学生首页不应展示同一组常问'
+    assert len({tuple(payload['questions'][:5]) for payload in (guest, student, teacher)}) == 3
+    for identity, title, payload in [('guest', '游客常问', guest), ('student', '学生常问', student),
+                                     ('teacher', '教师、行政人员常问', teacher)]:
+        assert payload['identity_type'] == identity and payload['title'] == title
+        assert payload['placeholder'] == '例如：' + payload['questions'][0]
+        assert handbook.suggestions(identity, limit=2)['questions'] == payload['questions'][:2]
+        assert len(set(payload['questions'])) == len(payload['questions'])
+
+
+def test_suggested_questions_have_answers_in_allowed_libraries():
+    """三种角色的推荐均应在关键词保底路径可答，且出处不能来自无权限或待补库。"""
+    for identity in ('guest', 'student', 'teacher'):
+        payload = handbook.suggestions(identity)
+        allowed = {item['id'] for item in libraries.searchable_for(identity)}
+        for question in payload['questions']:
+            resp = ask(question, identity=identity)
+            assert resp['behavior'] in ('answer', 'answer_with_caveat'), (identity, question, resp['behavior'])
+            assert resp['citations'], (identity, question)
+            assert all(c['kb']['id'] in allowed for c in resp['citations']), (identity, question)
+            assert all(c['kb']['id'] not in ('visitor-guide', 'staff-handbook') for c in resp['citations'])
+            if identity == 'guest':
+                assert all(c['kb']['id'] == 'public-guide' for c in resp['citations']), question
 
 
 # ---------------------------------------------------------------- HTTP 接口
@@ -427,7 +447,7 @@ def test_http_end_to_end():
         code, login = c.call('/v1/auth/login', {'device_id': 'http-device-0001'})
         assert code == 200 and login['identity_type'] == 'guest'
         c.token = login['token']
-        assert [lib['id'] for lib in login['libraries'] if lib['accessible']] == ['public-guide']
+        assert [lib['id'] for lib in login['libraries'] if lib['accessible']] == ['public-guide', 'visitor-guide']
         assert c.call('/v1/history')[0] == 403               # 游客不保存提问记录
         code, r = c.call('/v1/ask', {'question': LAW_APPEAL})
         assert r['behavior'] == 'answer' and r['citations'][0]['kb']['id'] == 'public-guide'
@@ -463,6 +483,28 @@ def test_http_end_to_end():
         c.token = ''                                         # 不带令牌才是游客
         assert c.call('/v1/handbook/article?id=' + DORM)[0] == 404
         assert c.call('/v1/handbook/catalog')[1]['visible'] == 3
+    finally:
+        server.shutdown()
+
+
+def test_http_suggestions_use_token_identity_not_query():
+    """推荐问题和展示文案都按登录令牌选角色，URL里的伪造身份没有作用。"""
+    server = make_server('127.0.0.1', 0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    client = Client(server.server_port)
+    try:
+        code, anonymous = client.call('/v1/suggestions?identity_type=teacher')
+        assert code == 200 and anonymous == handbook.suggestions('guest')
+        code, login = client.call('/v1/auth/login', {'device_id': 'suggestions-device-1'})
+        assert code == 200
+        client.token = login['token']
+        for identity, forged in [('guest', 'teacher'), ('student', 'teacher'), ('teacher', 'guest')]:
+            code, bound = client.call('/v1/me/identity', {'identity_type': identity})
+            assert code == 200 and bound['identity_type'] == identity
+            code, payload = client.call('/v1/suggestions?identity_type=' + forged)
+            assert code == 200 and payload == handbook.suggestions(identity), (identity, payload)
+        client.token = 'forged.token.value'
+        assert client.call('/v1/suggestions?identity_type=student')[0] == 401
     finally:
         server.shutdown()
 

@@ -1,4 +1,4 @@
-// 小程序页面联调：在 Node 里模拟微信运行环境，把七个页面的真实代码接到真实后端上走一遍。
+// 小程序页面联调：在 Node 里模拟微信运行环境，把八个页面的真实代码接到真实后端上走一遍。
 //
 // 这不是替代微信开发者工具（它不渲染界面），而是在提交前确认
 // 「页面逻辑 + 接口字段 + 登录与身份 + 失败提示」整条链路是通的。
@@ -22,6 +22,7 @@ const BASE = 'http://127.0.0.1:' + PORT;
 // ---------------------------------------------------------------- 模拟微信运行环境
 const storage = {};
 const ui = { toasts: [], modals: [], nav: [], clipboard: '' };
+const requests = [];
 let confirmModals = true;      // wx.showModal 默认点「确定」
 let network = true;            // 置 false 模拟断网
 
@@ -33,9 +34,11 @@ global.wx = {
   showModal: (o) => { ui.modals.push(o.title); if (o.success) o.success({ confirm: confirmModals }); },
   navigateTo: (o) => ui.nav.push(o.url),
   switchTab: (o) => ui.nav.push('tab:' + o.url),
+  reLaunch: (o) => { ui.nav.push('relaunch:' + o.url); if (o.complete) o.complete(); },
   pageScrollTo: () => {},
   setClipboardData: (o) => { ui.clipboard = o.data; },
   request({ url, method, data, header, success, fail }) {
+    requests.push({ path: new URL(url).pathname, method: method || 'GET', data });
     if (!network) return setTimeout(() => fail({ errMsg: 'request:fail' }), 0);
     const target = new URL(url.replace(/^http:\/\/127\.0\.0\.1:8000/, BASE));
     const body = data && method !== 'GET' ? JSON.stringify(data) : null;
@@ -133,12 +136,46 @@ async function run() {
   require(path.join(MP, 'app.js'));
   const app = getApp().globalData;
 
-  // 1. 启动：静默登录，身份是游客
+  // 1. 启动只初始化。未登录直入业务页面/接口都必须回登录，不能静默联网。
   appInstance.onLaunch();
-  await until(() => store.token() && store.profile(), '启动登录');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(store.isLoggedIn(), false);
+  assert.equal(store.token(), '');
+  assert.equal(requests.length, 0, '启动不能静默登录');
+  for (const [name, options] of [['home'], ['chat'], ['handbook'], ['mine'],
+    ['doc', { index: '26' }], ['article', { id: 'hb-510' }], ['history']]) {
+    const navBefore = ui.nav.length;
+    const page = mount(name, options);
+    if (page.onShow) page.onShow();
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.ok(ui.nav.slice(navBefore).includes('relaunch:/pages/login/login'), name + ' 未登录应跳转登录页');
+  }
+  const unsigned = await api.catalog();
+  assert.equal(unsigned.ok, false);
+  assert.equal(requests.length, 0, '未登录直入页面/业务请求不应请求后端');
+  console.log('PASS 启动不静默登录；七个业务页面和直接API请求均拦截未登录访问');
+
+  async function enter(identity, code) {
+    const login = mount('login');
+    login.onShow();
+    login.chooseRole(tap({ identity }));
+    if (code) login.codeChange(typed(code));
+    login.submit();
+    await until(() => !login.data.busy && store.isLoggedIn(), identity + ' 登录');
+    assert.equal(store.identity(), identity);
+    assert.equal(ui.nav.at(-1), 'tab:/pages/home/home');
+    return login;
+  }
+  function loginRequests() { return requests.filter((request) => request.path === '/v1/auth/login').length; }
+
+  const loginPage = mount('login');
+  assert.equal(loginPage.data.selectedRole, 'student', '登录页默认选学生');
+  await enter('guest');
   assert.equal(store.identity(), 'guest');
   assert.equal(store.profile().auth_mode, 'dev');
-  console.log('PASS 启动即静默登录，初始身份为游客（后端未配置小程序密钥 → 开发模式）');
+  assert.equal(store.read().loginComplete, true);
+  assert.equal(loginRequests(), 1);
+  console.log('PASS 登录页明确选择游客后，认证和身份绑定成功才进入首页');
 
   // 2. 首页（游客）：示例问题来自后端，只列国家法规，提示还有 25 份文件要绑定身份
   const home = mount('home');
@@ -146,10 +183,15 @@ async function run() {
   await until(() => !home.data.loading, '首页加载');
   assert.equal(home.data.offline, false);
   assert.equal(home.data.isGuest, true);
-  assert.equal(home.data.libraryNames, '国家教育法规');
+  assert.equal(home.data.libraryNames, store.accessibleLibraries().map((item) => item.name).join('、'));
+  assert.ok(home.data.libraryNames.includes('国家教育法规'));
+  assert.ok(home.data.libraryNames.includes('杭电游客参观指南'), '游客待补知识库也应正确展示');
   assert.deepEqual(home.data.categories, [{ name: '国家法规', count: 3 }]);
   assert.equal(home.data.hidden, 25);
   assert.ok(home.data.questions.length >= 3);
+  const guestQuestions = home.data.questions.slice();
+  assert.equal(home.data.suggestionsTitle, '游客常问');
+  assert.ok(home.data.questionPlaceholder.includes(guestQuestions[0]));
   console.log('PASS 首页（游客）：可查国家教育法规 3 份，另有 25 份校内规章提示绑定身份');
 
   // 3. 游客问校内规章 → 没有依据；问国家法规 → 作答并带出处
@@ -179,19 +221,44 @@ async function run() {
   assert.equal(guestHistory.data.needIdentity, true);
   console.log('PASS 游客打不开校内规章条文；提问记录页提示先绑定身份');
 
-  // 5. 我的：绑定学生身份 → 可查范围扩大，原来的游客对话清空
-  const mine = mount('mine');
+  // 5. 我的只展示身份，退出后必须在独立登录页重新选择学生。
+  let mine = mount('mine');
   mine.onShow();
-  await until(() => mine.data.signedIn, '我的页加载');
+  await until(() => mine.data.libraries.length > 0, '我的页加载');
   assert.equal(mine.data.devMode, true);
-  assert.equal(mine.data.teacherNeedsCode, true);
-  assert.deepEqual(mine.data.options.map((o) => o.identityType), ['student', 'teacher']);
-  mine.choose(tap({ identity: 'student' }));
-  await until(() => store.identity() === 'student' && !mine.data.binding, '绑定学生');
+  for (const name of ['choose', 'bind', 'codeChange', 'submitCode']) assert.equal(typeof mine[name], 'undefined', '我的不能提供修改角色方法 ' + name);
+  const guestLoginCount = loginRequests();
+  app.pendingQuestion = '退出前的问题';
+  app.pendingDraft = '退出前的草稿';
+  app.pendingCategory = '校园生活';
+  mine.signOut();
+  await until(() => !store.isLoggedIn(), '退出游客');
+  assert.equal(store.token(), '');
+  assert.equal(ui.nav.at(-1), 'relaunch:/pages/login/login');
+  assert.ok(!app.pendingQuestion && !app.pendingDraft && !app.pendingCategory);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(loginRequests(), guestLoginCount, '退出不能静默重新建立游客会话');
+  await enter('student');
+  mine = mount('mine');
+  mine.onShow();
+  await until(() => mine.data.libraries.length > 0 && mine.data.role.name === '学生', '学生我的页');
   assert.equal(mine.data.role.name, '学生');
   assert.deepEqual(mine.data.libraries.filter((l) => l.accessible).map((l) => l.name), ['国家教育法规', '学生手册']);
   assert.equal(store.getMessages().length, 0);
-  console.log('PASS 我的：绑定学生身份后可查国家教育法规 + 学生手册，游客对话已清空');
+  console.log('PASS 我的仅展示身份；退出清会话和待发送内容；从登录页重新选学生后权限扩大');
+
+  home.onShow();
+  assert.deepEqual(home.data.questions, [], '切换身份时先清除上一身份的常问');
+  await until(() => !home.data.loading && home.loadedFor === 'student', '学生首页常问');
+  const studentQuestions = home.data.questions.slice();
+  assert.equal(home.data.suggestionsTitle, '学生常问');
+  assert.equal(studentQuestions.length, 5);
+  assert.notDeepEqual(studentQuestions, guestQuestions);
+  assert.ok(home.data.questionPlaceholder.includes(studentQuestions[0]));
+  home.ask(tap({ question: studentQuestions[0] }));
+  assert.equal(app.pendingQuestion, studentQuestions[0], '点击常问把当前角色的问题带入问答页');
+  assert.equal(ui.nav.at(-1), 'tab:/pages/chat/chat');
+  app.pendingQuestion = '';
 
   // 6. 学生提问 → 命中住宿规定第二十二条；点出处进条文原文；翻页；复制；带草稿回问答
   chat.onShow();
@@ -281,20 +348,38 @@ async function run() {
   await until(() => history.data.items.length === 0, '清空记录');
   console.log('PASS 提问记录：学生的 4 次提问都在服务端，清空后为空');
 
-  // 10. 教师身份要口令：错的拒绝，对的通过；之后解除身份回到游客
-  mine.choose(tap({ identity: 'teacher' }));
-  assert.equal(mine.data.codeFor, 'teacher', '教师身份先弹口令输入');
-  mine.codeChange(typed('wrong'));
-  mine.submitCode();
-  await until(() => !mine.data.binding && ui.toasts.some((t) => t.includes('口令不正确')), '错误口令');
-  assert.equal(store.identity(), 'student');
-  mine.codeChange(typed('T-2026'));
-  mine.submitCode();
-  await until(() => store.identity() === 'teacher' && !mine.data.binding, '绑定教师');
+  // 10. 教师也必须退出后在登录页选择。错口令不能留下已登录状态。
+  mine.signOut();
+  await until(() => !store.isLoggedIn(), '退出学生');
+  const teacherLogin = mount('login');
+  teacherLogin.onShow();
+  teacherLogin.chooseRole(tap({ identity: 'teacher' }));
+  teacherLogin.codeChange(typed('wrong'));
+  teacherLogin.submit();
+  await until(() => !teacherLogin.data.busy && teacherLogin.data.error, '教师错误口令');
+  assert.ok(teacherLogin.data.error.includes('口令不正确'));
+  assert.equal(store.isLoggedIn(), false);
+  assert.equal(store.token(), '', '认证成功但口令失败，不能保存临时令牌');
+  teacherLogin.codeChange(typed('T-2026'));
+  teacherLogin.submit();
+  await until(() => store.isLoggedIn() && store.identity() === 'teacher' && !teacherLogin.data.busy, '教师正确口令登录');
+  mine = mount('mine');
+  mine.onShow();
+  await until(() => mine.data.libraries.length > 0 && mine.data.role.identityType === 'teacher', '教师我的页');
   assert.equal(mine.data.libraries.filter((l) => l.accessible).length, 3);
-  mine.choose(tap({ identity: 'guest' }));
-  await until(() => store.identity() === 'guest' && !mine.data.binding, '解除身份');
-  console.log('PASS 教师身份需要口令（错的拒绝、对的通过）；解除身份后回到游客');
+  home.onShow();
+  assert.deepEqual(home.data.questions, [], '教师登录不能继续展示学生常问');
+  await until(() => !home.data.loading && home.loadedFor === 'teacher', '教师首页常问');
+  assert.equal(home.data.suggestionsTitle, '教师、行政人员常问');
+  assert.equal(home.data.questions.length, 5);
+  assert.notDeepEqual(home.data.questions, studentQuestions);
+  assert.notDeepEqual(home.data.questions, guestQuestions);
+  assert.ok(home.data.questionPlaceholder.includes(home.data.questions[0]));
+  console.log('PASS 首页三种身份显示各自常问、标题与示例，切换后清除旧角色推荐');
+  mine.signOut();
+  await until(() => !store.isLoggedIn(), '退出教师');
+  await enter('guest');
+  console.log('PASS 教师登录：错误口令保持未登录、正确口令才进入；退出后可从登录页选择游客');
 
   // 11. 之前打开的受限条文页，回到前台时不能继续显示
   await new Promise((r) => setTimeout(r, 50));
@@ -323,20 +408,82 @@ async function run() {
   await until(() => !offlineHome.data.offline && !offlineHome.data.loading, '恢复后首页');
   console.log('PASS 断网：问答与首页都给出提示和重试；恢复后重发原问题得到回答');
 
-  // 13. 令牌失效：自动重新登录后重试，用户无感
+  // 13. 续登先向服务端核对身份，缓存过期不能直接进入首页。
+  // 后端仍为游客，本机保留「以前的学生身份」，模拟另一端已经变更身份。
+  const staleProfile = store.profile();
+  staleProfile.identity_type = 'student';
+  staleProfile.user.identity_type = 'student';
+  store.setSession(staleProfile);
+  store.appendMessages([{ id: 'stale-role-message', speaker: 'user', text: '旧身份下的对话' }]);
+  const resume = mount('login');
+  const beforeResume = ui.nav.length;
+  const resumeLoginCount = loginRequests();
+  resume.onShow();
+  assert.equal(resume.data.busy, true);
+  assert.equal(resume.data.resuming, true);
+  assert.equal(ui.nav.length, beforeResume, '续登不能在服务端核验前直接进首页');
+  await until(() => !resume.data.busy && store.identity() === 'guest', '续登刷新服务端身份');
+  assert.equal(resume.data.selectedRole, 'guest');
+  assert.equal(store.getMessages().length, 0, '服务端身份改变后清除旧身份对话');
+  assert.equal(ui.nav.at(-1), 'tab:/pages/home/home');
+  assert.equal(loginRequests(), resumeLoginCount, '续登只核对已有令牌，不另行登录');
+
+  // 续登断网不能丢会话；保持角色锁定，恢复后点击重试仍使用原令牌。
+  store.appendMessages([{ id: 'resume-message', speaker: 'user', text: '续登前的对话' }]);
+  const cachedToken = store.token();
+  const cachedProfile = store.profile();
+  const cachedMessages = store.getMessages();
+  const offlineLogin = mount('login');
+  network = false;
+  const beforeOfflineResume = ui.nav.length;
+  offlineLogin.onShow();
+  await until(() => !offlineLogin.data.busy && offlineLogin.data.error, '断网续登');
+  assert.equal(store.isLoggedIn(), true);
+  assert.equal(store.token(), cachedToken);
+  assert.deepEqual(store.profile(), cachedProfile);
+  assert.deepEqual(store.getMessages(), cachedMessages);
+  assert.equal(offlineLogin.data.resuming, true);
+  assert.equal(ui.nav.length, beforeOfflineResume, '断网续登不能进入首页');
+  offlineLogin.chooseRole(tap({ identity: 'student' }));
+  assert.equal(offlineLogin.data.selectedRole, 'guest', '续登失败期间不能直接改角色');
+  network = true;
+  offlineLogin.submit();
+  await until(() => !offlineLogin.data.busy && !offlineLogin.data.error, '联网后重试续登');
+  assert.equal(store.token(), cachedToken);
+  assert.deepEqual(store.getMessages(), cachedMessages);
+  assert.equal(loginRequests(), resumeLoginCount);
+  assert.equal(ui.nav.at(-1), 'tab:/pages/home/home');
+  console.log('PASS 续登先同步服务端身份并清旧对话；断网保留会话、锁定角色，恢复后原令牌重试');
+
+  // 14. 续登时令牌失效：清除登录态并回到登录页，不能自动重新登录。
   const db = store.read();
   db.token = 'expired.token.value';
   wx.setStorageSync('campus_assistant_v2', db);
-  const res = await api.catalog();
-  assert.equal(res.ok, true);
-  assert.notEqual(store.token(), 'expired.token.value');
-  console.log('PASS 令牌失效时自动重新登录并重试');
+  const beforeExpiry = loginRequests();
+  const expiredLogin = mount('login');
+  expiredLogin.onShow();
+  await until(() => !expiredLogin.data.busy && expiredLogin.data.error, '续登令牌过期');
+  assert.equal(expiredLogin.data.resuming, false);
+  assert.equal(store.isLoggedIn(), false);
+  assert.equal(store.token(), '');
+  assert.equal(ui.nav.at(-1), 'relaunch:/pages/login/login');
+  assert.equal(loginRequests(), beforeExpiry);
+  console.log('PASS 续登令牌失效清除会话并返回登录页，不静默重试登录');
 
-  // 14. 退出登录
+  // 15. 再次显式登录后退出，仍必须停在登录页。
+  await enter('guest');
+  mine = mount('mine');
+  mine.onShow();
+  await until(() => mine.data.libraries.length > 0, '退出前我的页');
+  const beforeSignOut = loginRequests();
   mine.signOut();
-  await until(() => store.token() && store.identity() === 'guest', '退出后重新建立游客会话');
+  await until(() => !store.isLoggedIn(), '最终退出');
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(store.token(), '');
   assert.equal(store.getMessages().length, 0);
-  console.log('PASS 退出登录后清掉本机状态，并以游客身份重新建立会话');
+  assert.equal(loginRequests(), beforeSignOut);
+  assert.equal(ui.nav.at(-1), 'relaunch:/pages/login/login');
+  console.log('PASS 退出后停留登录页，令牌与对话清空，不自动进入游客会话');
 }
 
 (async () => {
@@ -346,5 +493,5 @@ async function run() {
   child.kill();
   try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* 临时目录，删不掉也无妨 */ }
   if (failed) { console.error(failed); process.exit(1); }
-  console.log('小程序页面联调全部通过（七个页面，真实后端，无需开发者工具）。');
+  console.log('小程序页面联调全部通过（八个页面，显式角色登录，真实后端，无需开发者工具）。');
 })();

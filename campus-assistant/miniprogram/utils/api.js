@@ -1,9 +1,9 @@
 // 后端接口封装。全小程序只有这一个文件联网。
 //
-//   1. 登录：wx.login 拿 code → POST /v1/auth/login → 令牌存本机，之后每个请求带上。
+//   1. 登录：用户选择角色 → wx.login → 后端认证及身份校验 → 保存完整会话。
 //      后端配了小程序 AppID / AppSecret 就走真实微信登录；没配时按设备号发开发账号，
 //      所以这里两样都上报，由后端决定用哪个。
-//   2. 身份不由小程序上报：能查什么由后端按令牌认定，这里不传 identity_type。
+//   2. 角色仅在登录时提交给身份绑定接口；业务请求的权限仍由后端按令牌认定。
 //   3. 所有请求都 resolve 成 { ok, data } 或 { ok: false, error, code }，不 reject——
 //      页面据此显示「连不上服务」并给重试，而不是白屏。
 const store = require('./store');
@@ -46,32 +46,112 @@ function wxCode() {
 }
 
 let pendingLogin = null;
-function login() {
-  if (!pendingLogin) {
-    pendingLogin = wxCode()
-      .then((code) => send('/v1/auth/login', 'POST', { code: code, device_id: store.deviceId() }))
-      .then((res) => {
-        pendingLogin = null;
-        if (res.ok) store.setSession(res.data);
-        return res;
-      });
+let sessionVersion = 0;
+let redirecting = false;
+
+function cancelled() {
+  return { ok: false, code: 'SESSION_CHANGED', error: '登录状态已变化，请重新操作' };
+}
+
+function clearPending() {
+  const app = getApp().globalData;
+  app.pendingQuestion = '';
+  app.pendingDraft = '';
+  app.pendingCategory = '';
+}
+
+function openLogin() {
+  if (redirecting) return;
+  redirecting = true;
+  wx.reLaunch({ url: '/pages/login/login', complete: () => { redirecting = false; } });
+}
+
+function signOut() {
+  // 让退出前的登录、角色绑定、页面请求全部失效，迟到的响应不能恢复旧身份。
+  sessionVersion += 1;
+  pendingLogin = null;
+  store.signOut();
+  clearPending();
+  openLogin();
+}
+
+function requireLogin() {
+  if (store.isLoggedIn()) return true;
+  clearPending();
+  openLogin();
+  return false;
+}
+
+function relogin() {
+  wx.showModal({
+    title: '重新选择登录身份？',
+    content: '将退出当前登录并清除本机对话，然后返回登录页选择身份。',
+    confirmText: '重新登录',
+    success: (res) => {
+      if (!res.confirm) return;
+      try { signOut(); } catch (error) { wx.showToast({ title: error.message, icon: 'none' }); }
+    }
+  });
+}
+
+function login(identityType, code) {
+  if (!store.roles.some((role) => role.identityType === identityType)) {
+    return Promise.resolve({ ok: false, code: 'BAD_IDENTITY', error: '请选择登录身份' });
   }
-  return pendingLogin;
+  if (store.isLoggedIn()) {
+    return Promise.resolve({ ok: false, code: 'ALREADY_LOGGED_IN', error: '请先退出登录，再选择其他身份' });
+  }
+  if (pendingLogin) return pendingLogin;
+  const version = sessionVersion;
+  const task = wxCode()
+    .then((wxLoginCode) => {
+      if (version !== sessionVersion) return cancelled();
+      return send('/v1/auth/login', 'POST', { code: wxLoginCode, device_id: store.deviceId() });
+    })
+    .then((signed) => {
+      if (version !== sessionVersion) return cancelled();
+      if (!signed.ok) return signed;
+      // 中间令牌只留在本次请求里。教师口令错误等失败不会留下可进入首页的会话。
+      return send('/v1/me/identity', 'POST', { identity_type: identityType, code: code || '' }, signed.data.token)
+        .then((bound) => {
+          if (version !== sessionVersion) return cancelled();
+          if (!bound.ok) return bound;
+          if (bound.data.identity_type !== identityType) {
+            return { ok: false, code: 'IDENTITY_MISMATCH', error: '登录身份校验失败，请重试' };
+          }
+          const data = Object.assign({}, bound.data, { token: signed.data.token });
+          store.completeLogin(data);
+          clearPending();
+          return { ok: true, data };
+        });
+    })
+    .catch((error) => ({ ok: false, code: 'LOGIN_FAILED', error: error.message || '登录失败，请重试' }));
+  pendingLogin = task;
+  task.then(() => { if (pendingLogin === task) pendingLogin = null; });
+  return task;
 }
 
 function ensureLogin() {
-  return store.token() ? Promise.resolve({ ok: true }) : login();
+  return Promise.resolve(requireLogin() ? { ok: true }
+    : { ok: false, code: 'LOGIN_REQUIRED', error: '请先在登录页选择身份并登录' });
 }
 
-// 带令牌请求；令牌失效（401）时重新登录一次再试。
-function request(path, method, data) {
-  return ensureLogin().then((signed) => {
-    if (!signed.ok) return signed;
-    return send(path, method, data, store.token()).then((res) => {
-      if (res.status !== 401) return res;
-      store.clearToken();
-      return login().then((again) => (again.ok ? send(path, method, data, store.token()) : again));
-    });
+// 业务请求不会静默创建游客会话；令牌失效时回到登录页重新选择身份。
+function request(path, method, data, updateProfile) {
+  if (!requireLogin()) {
+    return Promise.resolve({ ok: false, code: 'LOGIN_REQUIRED', error: '请先在登录页选择身份并登录' });
+  }
+  const version = sessionVersion;
+  const token = store.token();
+  return send(path, method, data, token).then((res) => {
+    if (version !== sessionVersion || token !== store.token() || !store.isLoggedIn()) return cancelled();
+    if (res.status === 401) {
+      signOut();
+      return { ok: false, status: 401, code: 'LOGIN_REQUIRED', error: '登录已失效，请重新登录' };
+    }
+    // 在同一轮有效性检查后保存，避免旧 /me 响应覆盖退出后建立的新身份。
+    if (res.ok && updateProfile) store.setSession(res.data);
+    return res;
   });
 }
 
@@ -81,13 +161,7 @@ function query(params) {
 
 // ---------------------------------------------------------------- 接口
 function health() { return send('/v1/health', 'GET'); }
-function me() {
-  return request('/v1/me', 'GET').then((res) => { if (res.ok) store.setSession(res.data); return res; });
-}
-function bindIdentity(identityType, code) {
-  return request('/v1/me/identity', 'POST', { identity_type: identityType, code: code || '' })
-    .then((res) => { if (res.ok) store.setSession(res.data); return res; });
-}
+function me() { return request('/v1/me', 'GET', undefined, true); }
 function ask(question, previousQuestion, sessionId) {
   return request('/v1/ask', 'POST', {
     question: question,
@@ -148,6 +222,6 @@ function toMessage(resp) {
 }
 
 module.exports = {
-  BASE_URL, login, ensureLogin, health, me, bindIdentity, ask, feedback, suggestions,
+  BASE_URL, login, ensureLogin, requireLogin, signOut, relogin, health, me, ask, feedback, suggestions,
   catalog, doc, article, search, history, clearHistory, toMessage
 };

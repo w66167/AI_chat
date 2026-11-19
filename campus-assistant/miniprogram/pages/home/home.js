@@ -11,11 +11,14 @@ Page({
     libraryNames: '',
     draft: '',
     questions: [],
+    suggestionsTitle: '常见问题',
+    questionPlaceholder: '请输入你想了解的规定',
     categories: [],
     hidden: 0
   },
 
   onShow() {
+    if (!api.requireLogin()) return;
     // 身份没变且已经加载过，就不重复请求
     if (this.loadedFor === store.identity() && !this.data.offline) return this.syncRole();
     this.load();
@@ -31,19 +34,27 @@ Page({
   },
 
   load() {
-    this.setData({ loading: !this.data.questions.length });
+    const identity = store.identity();
+    const identityChanged = this.loadedFor !== identity;
+    // 换身份时先撤下上一身份的常问，加载失败也不展示旧角色的内容。
+    this.setData(Object.assign({ loading: identityChanged || !this.data.questions.length },
+      identityChanged ? { questions: [], categories: [], hidden: 0,
+        suggestionsTitle: '常见问题', questionPlaceholder: '请输入你想了解的规定' } : {}));
     Promise.all([api.suggestions(), api.catalog()]).then(([suggested, catalog]) => {
+      if (identity !== store.identity()) return;
       if (!suggested.ok || !catalog.ok) {
         const failed = suggested.ok ? catalog : suggested;
         this.setData({ loading: false, offline: true, offlineReason: failed.error });
         return this.syncRole();
       }
-      this.loadedFor = store.identity();
+      this.loadedFor = identity;
       this.syncRole();
       this.setData({
         loading: false,
         offline: false,
         questions: suggested.data.questions.slice(0, 5),
+        suggestionsTitle: suggested.data.title || '常见问题',
+        questionPlaceholder: suggested.data.placeholder || '请输入你想了解的规定',
         categories: catalog.data.groups.map((group) => ({ name: group.category, count: group.docs.length })),
         hidden: catalog.data.hidden
       });
@@ -72,5 +83,5 @@ Page({
   },
 
   openHandbook() { wx.switchTab({ url: '/pages/handbook/handbook' }); },
-  openMine() { wx.switchTab({ url: '/pages/mine/mine' }); }
+  openLogin() { api.relogin(); }
 });

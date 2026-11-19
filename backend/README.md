@@ -223,7 +223,7 @@ API 已启动：http://127.0.0.1:8000   接口说明 /docs
 ```powershell
 python tests\test_libraries.py     # 知识库路由与出处标注（11 项）
 python tests\test_service.py       # 生成层、登录与身份、手册浏览、HTTP 接口（24 项）
-node tests\smoke_miniprogram.js    # 小程序七个页面接真实后端走完整流程
+node tests\smoke_miniprogram.js    # 小程序八个页面接真实后端走完整流程
 python tests\eval_policy.py        # 150 条评测集打分（不调大模型）
 ```
 

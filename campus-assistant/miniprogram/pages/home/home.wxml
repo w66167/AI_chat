@@ -1,8 +1,8 @@
 <view class="ask-block">
   <view class="ask-who">{{roleName}}<text wx:if="{{libraryNames}}">，可查{{libraryNames}}</text></view>
-  <view class="ask-title">手册里怎么规定的，问一句就知道。</view>
+  <view class="ask-title">制度怎么规定的，问一句就知道。</view>
   <view class="ask-box">
-    <input class="ask-input" value="{{draft}}" placeholder="比如：挂科了还能补考吗" placeholder-class="ask-placeholder" maxlength="300" confirm-type="send" bindinput="draftChange" bindconfirm="submit"/>
+    <input class="ask-input" value="{{draft}}" placeholder="{{questionPlaceholder}}" placeholder-class="ask-placeholder" maxlength="300" confirm-type="send" bindinput="draftChange" bindconfirm="submit"/>
     <button class="ask-send" bindtap="submit">提问</button>
   </view>
   <view class="ask-foot">回答依据《学生手册》2017 年 9 月版，每条都附出处和页码。</view>
@@ -19,12 +19,12 @@
 
   <block wx:else>
     <view class="notice" wx:if="{{isGuest && hidden}}">
-      <view>你现在是游客，只能查国家教育法规。绑定在校身份后可查学籍、成绩、奖助、住宿等 {{hidden}} 份校内规章。</view>
-      <view class="notice-action" bindtap="openMine">去绑定身份</view>
+      <view>你当前以游客身份登录，只能查国家教育法规。以在校身份重新登录后，可查学籍、成绩、奖助、住宿等 {{hidden}} 份校内规章。</view>
+      <view class="notice-action" bindtap="openLogin">以在校身份登录</view>
     </view>
 
     <view class="section">
-      <view class="section-head"><text class="section-title">同学们常问</text></view>
+      <view class="section-head"><text class="section-title">{{suggestionsTitle}}</text></view>
       <view class="panel">
         <button class="row" wx:for="{{questions}}" wx:key="*this" data-question="{{item}}" bindtap="ask">
           <view class="row-main"><view class="row-title">{{item}}</view></view>
@@ -34,7 +34,7 @@
     </view>
 
     <view class="section">
-      <view class="section-head"><text class="section-title">按事项翻手册</text><button class="section-more" bindtap="openHandbook">全部文件</button></view>
+      <view class="section-head"><text class="section-title">按事项查知识库</text><button class="section-more" bindtap="openHandbook">全部文件</button></view>
       <view class="category-grid">
         <button class="category" wx:for="{{categories}}" wx:key="name" data-name="{{item.name}}" bindtap="openCategory">
           <view class="category-name">{{item.name}}</view>

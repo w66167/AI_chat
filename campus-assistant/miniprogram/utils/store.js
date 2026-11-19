@@ -27,7 +27,7 @@ let guestMessages = [];
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function id(prefix) { return prefix + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function fresh() {
-  return { schemaVersion: 2, deviceId: '', token: '', profile: null, messages: [] };
+  return { schemaVersion: 2, deviceId: '', token: '', profile: null, loginComplete: false, messages: [] };
 }
 function write(db) {
   // 写入成功后页面才更新，避免空间不足时出现「已保存」的假象。
@@ -51,13 +51,19 @@ function deviceId() {
   return db.deviceId;
 }
 function token() { return read().token || ''; }
-function clearToken() { const db = read(); db.token = ''; write(db); }
+function clearToken() { const db = read(); db.token = ''; db.loginComplete = false; write(db); }
+function isLoggedIn() {
+  const db = read();
+  // 老版本的静默登录缓存也必须先走一次新登录页，明确选择本次使用的身份。
+  return !!(db.loginComplete && db.token && db.profile && db.profile.user);
+}
 
 // 后端返回的登录 / 身份结果统一从这里落地。
 // 身份变了就清空当前对话：对话里可能有新身份无权查看的条文。
-function setSession(payload) {
+function setSession(payload, complete) {
   const db = read();
   const before = db.profile ? db.profile.identity_type : 'guest';
+  const beforeUser = db.profile && db.profile.user ? db.profile.user.id : '';
   if (payload.token) db.token = payload.token;
   db.profile = {
     user: payload.user || null,
@@ -66,10 +72,14 @@ function setSession(payload) {
     binding: payload.binding || {},
     libraries: payload.libraries || []
   };
-  if (before !== db.profile.identity_type) { db.messages = []; guestMessages = []; }
+  const afterUser = db.profile.user ? db.profile.user.id : '';
+  if (before !== db.profile.identity_type || beforeUser !== afterUser) { db.messages = []; guestMessages = []; }
+  if (complete) db.loginComplete = true;
   write(db);
   return db.profile;
 }
+// 认证和所选身份的服务端校验都完成之后，才一次性保存可用会话。
+function completeLogin(payload) { return setSession(payload, true); }
 
 // ---------------------------------------------------------------- 身份
 function identity() {
@@ -135,6 +145,6 @@ function signOut() {
 
 module.exports = {
   init, read, id, roles, role, roleByIdentity, identity, profile, libraries, accessibleLibraries,
-  deviceId, token, clearToken, setSession, signOut,
+  deviceId, token, clearToken, isLoggedIn, setSession, completeLogin, signOut,
   keepsHistory, getMessages, appendMessages, updateMessage, clearMessages
 };

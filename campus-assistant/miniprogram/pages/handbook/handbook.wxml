@@ -1,6 +1,6 @@
 <view class="page">
-  <view class="page-title">学生手册</view>
-  <view class="page-sub">2017 年 9 月版，学生处、教务处编<text wx:if="{{visible}}">。当前可看 {{visible}} 份文件</text></view>
+  <view class="page-title">知识库</view>
+  <view class="page-sub">按当前身份查看可访问的制度与条文<text wx:if="{{visible}}">，共 {{visible}} 份文件</text></view>
 
   <view class="search handbook-search">
     <input value="{{keyword}}" placeholder="搜条文里的词，如：补考、熄灯" maxlength="40" confirm-type="search" bindinput="keywordChange" bindconfirm="search"/>
@@ -20,7 +20,7 @@
     <view class="result-head">「{{searched}}」找到 {{results.length}} 条条文</view>
     <view wx:if="{{!results.length}}" class="state">
       <view class="state-title">条文里没有这个词</view>
-      <view class="state-desc">手册的用词可能和平时说法不同。换个词再搜，或者直接去问答页问。</view>
+      <view class="state-desc">知识库条文的用词可能和平时说法不同。换个词再搜，或者直接去问答页问。</view>
       <button class="btn btn-ghost" bindtap="askInstead">去问答页问这句</button>
     </view>
     <button class="slip" wx:for="{{results}}" wx:key="id" data-id="{{item.id}}" bindtap="openArticle">
@@ -53,8 +53,8 @@
     </view>
 
     <view class="notice handbook-notice" wx:if="{{hidden}}">
-      <view>还有 {{hidden}} 份校内规章需要绑定在校身份后查看。</view>
-      <view class="notice-action" bindtap="openMine">去绑定身份</view>
+      <view>还有 {{hidden}} 份校内规章需要以在校身份登录后查看。</view>
+      <view class="notice-action" bindtap="openLogin">以在校身份登录</view>
     </view>
   </block>
 </view>

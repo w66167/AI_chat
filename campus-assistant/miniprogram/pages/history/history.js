@@ -4,7 +4,7 @@ const api = require('../../utils/api');
 Page({
   data: { loading: true, error: '', needIdentity: false, items: [], open: {} },
 
-  onShow() { this.load(); },
+  onShow() { if (api.requireLogin()) this.load(); },
 
   load() {
     this.setData({ loading: !this.data.items.length, error: '' });
@@ -50,6 +50,6 @@ Page({
     });
   },
 
-  openMine() { wx.switchTab({ url: '/pages/mine/mine' }); },
+  openLogin() { api.relogin(); },
   openChat() { wx.switchTab({ url: '/pages/chat/chat' }); }
 });

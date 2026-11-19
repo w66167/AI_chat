@@ -18,6 +18,7 @@ Page({
   },
 
   onShow() {
+    if (!api.requireLogin()) return;
     const app = getApp().globalData;
     const wanted = app.pendingCategory;
     app.pendingCategory = '';
@@ -83,5 +84,5 @@ Page({
     wx.switchTab({ url: '/pages/chat/chat' });
   },
 
-  openMine() { wx.switchTab({ url: '/pages/mine/mine' }); }
+  openLogin() { api.relogin(); }
 });

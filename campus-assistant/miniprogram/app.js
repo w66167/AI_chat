@@ -1,5 +1,4 @@
 const store = require('./utils/store');
-const api = require('./utils/api');
 
 App({
   // pendingQuestion：从首页 / 手册带到问答页、进页面就发出去的问题
@@ -8,7 +7,6 @@ App({
   globalData: { pendingQuestion: '', pendingDraft: '', pendingCategory: '' },
   onLaunch() {
     store.init();
-    // 启动即静默登录并刷新身份；失败不打扰用户，各页面自己会显示「连不上服务」
-    api.ensureLogin().then((res) => { if (res.ok) api.me(); });
+    // 登录页是入口；由用户选择身份后登录，不在启动时自动创建游客会话。
   }
 });

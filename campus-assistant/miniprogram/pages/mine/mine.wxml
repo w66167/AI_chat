@@ -15,27 +15,6 @@
   <view class="me-note" wx:elif="{{!isGuest}}">身份为自行声明，尚未经学校统一身份认证核验。</view>
 
   <view class="section">
-    <view class="section-head"><text class="section-title">{{isGuest ? '绑定在校身份' : '更换身份'}}</text></view>
-    <view class="panel">
-      <button class="row" wx:for="{{options}}" wx:key="id" data-identity="{{item.identityType}}" disabled="{{binding}}" bindtap="choose">
-        <view class="row-main">
-          <view class="row-title">{{item.identityType === 'guest' ? '解除身份，回到游客' : '我是' + item.name}}</view>
-          <view class="row-desc">{{item.description}}</view>
-        </view>
-        <view class="chevron"></view>
-      </button>
-    </view>
-    <view class="code panel" wx:if="{{codeFor}}">
-      <view class="code-label">绑定教师、行政人员身份需要口令，请向管理员获取。</view>
-      <input class="code-input" value="{{code}}" placeholder="输入口令" password="{{true}}" maxlength="32" bindinput="codeChange" bindconfirm="submitCode"/>
-      <view class="code-actions">
-        <button class="btn btn-plain" bindtap="cancelCode">取消</button>
-        <button class="btn btn-primary" disabled="{{binding}}" bindtap="submitCode">确认绑定</button>
-      </view>
-    </view>
-  </view>
-
-  <view class="section">
     <view class="section-head"><text class="section-title">我能查什么</text></view>
     <view class="panel">
       <view class="row library" wx:for="{{libraries}}" wx:key="id">
@@ -54,14 +33,14 @@
   <view class="section">
     <view class="panel">
       <button class="row" bindtap="openHistory">
-        <view class="row-main"><view class="row-title">提问记录</view><view class="row-desc">{{isGuest ? '绑定在校身份后保存' : '保存在服务端，换手机也能看'}}</view></view>
+        <view class="row-main"><view class="row-title">提问记录</view><view class="row-desc">{{isGuest ? '游客身份不保存提问记录' : '保存在服务端，换手机也能看'}}</view></view>
         <view class="chevron"></view>
       </button>
       <button class="row" bindtap="about">
         <view class="row-main"><view class="row-title">关于校园知答</view></view>
         <view class="chevron"></view>
       </button>
-      <button class="row" wx:if="{{signedIn}}" bindtap="signOut">
+      <button class="row" bindtap="signOut">
         <view class="row-main"><view class="row-title sign-out">退出登录</view></view>
       </button>
     </view>

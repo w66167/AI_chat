@@ -2,14 +2,14 @@
   <view class="scope">
     <view class="scope-text"><text class="scope-role">{{roleName}}</text>可查：{{libraryNames || '—'}}<text wx:if="{{isGuest}}">（对话不保存）</text></view>
     <button class="scope-new" wx:if="{{messages.length}}" bindtap="clear">新对话</button>
-    <button class="scope-new" wx:elif="{{isGuest}}" bindtap="openMine">绑定身份</button>
+    <button class="scope-new" wx:elif="{{isGuest}}" bindtap="openLogin">重新登录</button>
   </view>
 
   <scroll-view class="chat-scroll" scroll-y="{{true}}" scroll-into-view="{{scrollTarget}}" scroll-with-animation="{{true}}">
     <view class="chat-content">
       <view class="welcome" wx:if="{{!messages.length && !asking && !error}}">
         <view class="welcome-title">想了解哪条规定？</view>
-        <view class="welcome-desc">直接用平常的话问。我会从手册里找到对应条文，说清楚规定是什么，并标出是哪一条、第几页。</view>
+        <view class="welcome-desc">直接用平常的话问。我会从知识库里找到对应条文，说清楚规定是什么，并标出是哪一条、第几页。</view>
         <button class="starter" wx:for="{{starters}}" wx:key="*this" data-question="{{item}}" bindtap="askSuggestion">{{item}}</button>
       </view>
 
@@ -17,12 +17,12 @@
         <view wx:if="{{message.speaker === 'user'}}" class="question"><text selectable="{{true}}">{{message.text}}</text></view>
 
         <view wx:else class="answer answer-{{message.kind}}">
-          <view class="answer-kind" wx:if="{{message.kind !== 'answer'}}">{{message.kind === 'clarify' ? '需要再具体一点' : message.kind === 'boundary' ? '这件事我办不了' : '手册里没有找到依据'}}</view>
+          <view class="answer-kind" wx:if="{{message.kind !== 'answer'}}">{{message.kind === 'clarify' ? '需要再具体一点' : message.kind === 'boundary' ? '这件事我办不了' : '知识库里没有找到依据'}}</view>
           <text class="answer-text {{message.folded && !expanded[message.id] ? 'folded' : ''}} {{message.mode === 'excerpt' ? 'excerpt' : ''}}" selectable="{{true}}">{{message.text}}</text>
           <view class="answer-more" wx:if="{{message.folded}}" data-id="{{message.id}}" bindtap="toggleExpand">{{expanded[message.id] ? '收起' : '展开全文'}}</view>
 
           <view class="sources" wx:if="{{message.citations.length}}">
-            <view class="sources-label">{{message.mode === 'generated' ? '依据以下条文整理' : '手册原文出自'}}</view>
+            <view class="sources-label">{{message.mode === 'generated' ? '依据以下条文整理' : '条文原文出自'}}</view>
             <button class="slip" wx:for="{{message.citations}}" wx:key="chunkId" wx:for-item="cite" data-id="{{cite.chunkId}}" bindtap="openArticle">
               <view class="slip-main"><view class="slip-article">{{cite.article || '正文'}}</view><view class="slip-doc">《{{cite.doc}}》</view></view>
               <view class="slip-page" wx:if="{{cite.page}}">第 {{cite.page}} 页</view>
@@ -45,7 +45,7 @@
 
       <view class="message" id="asking" wx:if="{{asking}}">
         <view class="question"><text>{{asking}}</text></view>
-        <view class="answer thinking">正在查手册<text class="dot">.</text><text class="dot dot-2">.</text><text class="dot dot-3">.</text></view>
+        <view class="answer thinking">正在查知识库<text class="dot">.</text><text class="dot dot-2">.</text><text class="dot dot-3">.</text></view>
       </view>
 
       <view class="message" id="error" wx:if="{{error}}">

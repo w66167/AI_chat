@@ -39,7 +39,7 @@
 ```text
 ┌──────────────────────────┐
 │ 微信小程序                │  campus-assistant/
-│ 首页 / 问答 / 我的        │  只负责界面与会话展示
+│ 登录 / 问答 / 我的        │  只负责界面与会话展示
 └───────────┬──────────────┘
             │ HTTPS  POST /v1/ask
 ┌───────────▼──────────────┐
@@ -80,7 +80,7 @@ AI_chat/
 │  ├─ app/server.py             HTTP 路由
 │  └─ tests/                    路由、服务、小程序联调、策略评测
 └─ campus-assistant/            微信小程序（不带知识内容，全部来自后端）
-   ├─ miniprogram/pages/        首页 / 问答 / 手册 / 我的 / 文件 / 条文原文 / 提问记录
+   ├─ miniprogram/pages/        登录 / 首页 / 问答 / 手册 / 我的 / 文件 / 条文原文 / 提问记录
    ├─ miniprogram/utils/api.js  唯一的联网入口：登录、令牌、全部接口
    └─ scripts/check.js          本地检查（结构、语法、联网规则、本机状态逻辑）
 ```
@@ -93,7 +93,7 @@ pip install -r requirements.txt
 python run.py --port 8000
 ```
 
-然后用微信开发者工具导入 `campus-assistant` 目录并编译。这样跑起来的是最低配置：
+然后用微信开发者工具导入 `campus-assistant` 目录并编译，在登录页选择游客、学生或教师/行政人员后登录。这样跑起来的是最低配置：
 关键词检索、回答为条文原文、开发模式登录。**想要像样的效果，按 [backend/README.md](backend/README.md) 配三样东西**：
 
 | 配置 | 不配时 | 配了之后 |
@@ -217,12 +217,15 @@ curl.exe -s http://127.0.0.1:8000/v1/health
 2. 目录选 **`campus-assistant`**（不是里面的 `miniprogram`）
 3. AppID 选「测试号」或游客模式；后端服务选「不使用云服务」
 4. 点「编译」
+5. 首次打开或未登录时，在登录页选择身份并登录；已有有效登录时可以继续原身份。
 
-首页顶上应显示「游客，可查国家教育法规」。如果显示「连不上问答服务」，说明后端没启动或地址不对
+选择游客登录后，首页顶上应显示「游客，可查国家教育法规」。如果显示「连不上问答服务」，说明后端没启动或地址不对
 （`campus-assistant/miniprogram/utils/api.js` 的 `BASE_URL`）。小程序不带知识内容，后端不可用时不会给出回答。
 
-在「我的」页绑定身份（游客 / 学生 / 教师、行政人员），身份决定能查什么：
+身份在独立登录页选择（游客 / 学生 / 教师、行政人员），决定能查什么；「我的」页只显示当前身份，不能修改角色。
+更换身份须先退出登录，回到登录页重新选择并登录。退出后不会自动以游客登录；令牌失效（401）也需回登录页重新登录。
 游客＝国家教育法规（手册前 3 份文件），学生＝＋学生手册 25 份校内规章，教师另有教职工手册（内容待补）。
+教师登录保留后端口令校验（配置了 `teacher_code` 时）。
 **身份由后端按登录令牌认定**，客户端改请求参数冒充不了；但目前身份是自行声明的，没有接学校统一身份认证。
 
 **知识维护人员与知识审核员不在小程序里**，职责由管理端工具 `knowledge_base/scripts/kb_admin.py` 承担：
@@ -238,7 +241,7 @@ python scripts/check-wxml.py                 # WXML 标签闭合
 cd ..\backend
 python tests\test_libraries.py               # 按身份选库与出处标注（11 项）
 python tests\test_service.py                 # 生成层、登录与身份、手册浏览、HTTP 接口（24 项）
-node tests\smoke_miniprogram.js              # 小程序七个页面接真实后端走完整流程
+node tests\smoke_miniprogram.js              # 小程序八个页面接真实后端走完整流程
 
 cd ..\knowledge_base
 python scripts\export_libraries.py --check   # 注册表前后端是否同步

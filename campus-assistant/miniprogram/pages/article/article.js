@@ -10,9 +10,10 @@ Page({
   },
 
   // 每次回到这一页都重新取：切了身份之后，无权查看的条文不能继续留在屏幕上
-  onShow() { if (this.loaded) this.load(true); },
+  onShow() { if (api.requireLogin() && this.loaded) this.load(true); },
 
   load(silent) {
+    if (!api.requireLogin()) return;
     if (!silent) this.setData({ loading: true, error: '' });
     api.article(this.chunkId).then((res) => {
       this.loaded = true;

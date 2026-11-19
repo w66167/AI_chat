@@ -30,6 +30,13 @@ CATEGORIES = [
 GUEST_QUESTIONS = ['对学校的处分不服可以申诉吗？', '学生在校期间受伤，学校要承担责任吗？',
                    '什么情况下学校可以给予退学处理？', '休学期间还算在校学生吗？']
 
+# 教师、行政人员优先处理学生管理事项。复用已有问答标题及其原文依据，
+# 不推荐尚未接入语料的教职工人事问题；前五条也与学生首页的推荐不同。
+TEACHER_QUESTION_IDS = ('hd-003', 'hd-010', 'hd-008', 'hd-022', 'hd-005',
+                        'hd-007', 'hd-021', 'hd-002')
+SUGGESTION_TITLES = {'guest': '游客常问', 'student': '学生常问',
+                     'teacher': '教师、行政人员常问'}
+
 _state = {'chunks': None, 'docs': None, 'by_id': None, 'order': None, 'qa': None, 'bm25': None}
 
 
@@ -214,21 +221,34 @@ def search(identity, query, limit=20):
 
 
 def suggestions(identity, limit=8):
-    """首页和问答页的示例问题。只给当前身份真的能问出答案的。"""
+    """按服务端认定的身份推荐有原文依据的问题；展示范围和检索权限分开。"""
     allowed = _allowed(identity)
     if 'student-handbook' not in allowed:
-        return {'questions': GUEST_QUESTIONS[:limit], 'groups': []}
+        return {'identity_type': identity, 'title': SUGGESTION_TITLES['guest'],
+                'placeholder': '例如：' + GUEST_QUESTIONS[0],
+                'questions': GUEST_QUESTIONS[:limit], 'groups': []}
     qa = _qa_entries()
+    teacher = identity in ('teacher', 'staff')
+    entries = qa['entries']
+    if teacher:
+        by_id = {entry['id']: entry for entry in entries}
+        entries = [by_id[entry_id] for entry_id in TEACHER_QUESTION_IDS if entry_id in by_id]
     groups = []
     for category in qa.get('categories') or []:
-        titles = [e['title'] for e in qa['entries'] if e.get('category') == category]
+        titles = [e['title'] for e in entries if e.get('category') == category]
         if titles:
             groups.append({'category': category, 'questions': titles})
-    # 每个分类轮流取一条，保证首页的几个问题覆盖不同事项
-    picked, depth = [], 0
-    while len(picked) < limit and any(depth < len(g['questions']) for g in groups):
-        for g in groups:
-            if depth < len(g['questions']) and len(picked) < limit:
-                picked.append(g['questions'][depth])
-        depth += 1
-    return {'questions': picked, 'groups': groups}
+    if teacher:
+        picked = [entry['title'] for entry in entries[:limit]]
+    else:
+        # 学生保留七类三十题，每类轮流取一条，覆盖入学、考试、毕业、生活等事项。
+        picked, depth = [], 0
+        while len(picked) < limit and any(depth < len(g['questions']) for g in groups):
+            for g in groups:
+                if depth < len(g['questions']) and len(picked) < limit:
+                    picked.append(g['questions'][depth])
+            depth += 1
+    role = 'teacher' if teacher else 'student'
+    return {'identity_type': identity, 'title': SUGGESTION_TITLES[role],
+            'placeholder': '例如：' + entries[0]['title'] if entries else '请输入具体问题',
+            'questions': picked, 'groups': groups}
