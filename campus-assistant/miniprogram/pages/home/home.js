@@ -29,7 +29,7 @@ Page({
     this.setData({
       roleName: role.name,
       isGuest: role.identityType === 'guest',
-      libraryNames: store.accessibleLibraries().map((item) => item.name).join('、')
+      libraryNames: store.searchableLibraries().map((item) => item.name).join('、')
     });
   },
 

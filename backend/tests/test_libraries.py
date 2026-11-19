@@ -113,7 +113,7 @@ def test_identity_routing():
     assert [i['id'] for i in libraries.searchable_for('student')] == ['public-guide', 'student-handbook']
     assert [i['id'] for i in libraries.searchable_for('guest')] == ['public-guide']
     assert [i['id'] for i in libraries.pending_for('teacher')] == ['staff-handbook']
-    # 游客参观指南只给游客，内容待补：在校身份看不到它，游客的回答里要如实说没检索它
+    # 游客参观指南只给游客，维护状态供后台诊断，不追加到用户回答。
     assert 'visitor-guide' not in [i['id'] for i in libraries.for_identity('student')]
     assert 'visitor-guide' not in [i['id'] for i in libraries.for_identity('teacher')]
     assert [i['id'] for i in libraries.pending_for('guest')] == ['visitor-guide']
@@ -159,7 +159,8 @@ def test_guest_only_reaches_public_law():
     assert resp['citations'][0]['kb']['name'] == '国家教育法规'
     assert DORM not in json.dumps(resp, ensure_ascii=False)
     assert resp['kb_pending'] == ['杭电游客参观指南']
-    assert '杭电游客参观指南' in resp['answer'] and '尚未接入检索' in resp['answer']
+    assert '杭电游客参观指南' not in resp['answer']
+    assert not any(term in resp['answer'] for term in ('待补', '尚未接入', '索引'))
 
 
 def test_guest_is_refused_when_only_restricted_chunks_match():
@@ -168,6 +169,9 @@ def test_guest_is_refused_when_only_restricted_chunks_match():
     assert resp['behavior'] == 'refuse_noanswer'
     assert resp['citations'] == []
     assert '学生手册' not in resp['answer']
+    assert resp['kb_pending'] == ['杭电游客参观指南']
+    assert '杭电游客参观指南' not in resp['answer']
+    assert not any(term in resp['answer'] for term in ('待补', '尚未接入', '索引'))
 
 
 def test_student_answer_carries_library():
@@ -187,12 +191,30 @@ def test_student_answer_carries_library():
     assert citation['page_start'] >= 1
 
 
-def test_teacher_is_told_about_pending_library():
-    """教师还能访问教职工手册，但它没接入检索——必须在答案里声明没查它。"""
-    resp = ask('宿舍几点熄灯', 'teacher', FakeRetriever(load(), ids=[DORM]))
-    assert resp['kb_pending'] == ['教职工手册']
-    assert '教职工手册' in resp['answer']
-    assert '尚未接入检索' in resp['answer']
+def test_teacher_pending_library_stays_in_diagnostics():
+    """正常回答、拒答和无资料分支都保留诊断字段，不向用户展示维护状态。"""
+    chunks = load()
+    for score, behavior in [(3.0, 'answer'), (-5.0, 'refuse_noanswer')]:
+        resp = ask('宿舍几点熄灯', 'teacher', FakeRetriever(chunks, ids=[DORM], score=score))
+        assert resp['behavior'] == behavior
+        assert resp['kb_pending'] == ['教职工手册']
+        assert [kb['id'] for kb in resp['knowledge_bases']] == ['public-guide', 'student-handbook']
+        assert '教职工手册' not in resp['answer']
+        assert not any(term in resp['answer'] for term in ('待补', '尚未接入', '索引'))
+        assert [c['chunk_id'] for c in resp['citations']] == ([DORM] if behavior == 'answer' else [])
+
+    original = libraries.searchable_for
+    try:
+        libraries.searchable_for = lambda identity: []
+        resp = ask('宿舍几点熄灯', 'teacher', FakeRetriever(chunks, ids=[DORM]))
+        assert resp['behavior'] == 'refuse_noanswer' and resp['kb_gap'] is True
+        assert resp['kb_pending'] == ['教职工手册']
+        assert resp['knowledge_bases'] == [] and resp['citations'] == []
+        assert resp['answer'] == resp['kb_gap_reason']
+        assert '资料不足' in resp['answer'] and '学校官网' in resp['answer']
+        assert not any(term in resp['answer'] for term in ('待补', '接入', '索引', '本机', '教职工手册'))
+    finally:
+        libraries.searchable_for = original
 
 
 def test_scope_filter_runs_before_topk():

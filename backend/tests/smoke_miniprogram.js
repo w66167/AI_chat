@@ -183,9 +183,9 @@ async function run() {
   await until(() => !home.data.loading, '首页加载');
   assert.equal(home.data.offline, false);
   assert.equal(home.data.isGuest, true);
-  assert.equal(home.data.libraryNames, store.accessibleLibraries().map((item) => item.name).join('、'));
+  assert.equal(home.data.libraryNames, store.searchableLibraries().map((item) => item.name).join('、'));
   assert.ok(home.data.libraryNames.includes('国家教育法规'));
-  assert.ok(home.data.libraryNames.includes('杭电游客参观指南'), '游客待补知识库也应正确展示');
+  assert.ok(!home.data.libraryNames.includes('杭电游客参观指南'), '介绍中的库不能冒充已可查询的库');
   assert.deepEqual(home.data.categories, [{ name: '国家法规', count: 3 }]);
   assert.equal(home.data.hidden, 25);
   assert.ok(home.data.questions.length >= 3);
@@ -226,6 +226,9 @@ async function run() {
   mine.onShow();
   await until(() => mine.data.libraries.length > 0, '我的页加载');
   assert.equal(mine.data.devMode, true);
+  assert.equal(mine.data.libraries.length, 4, '知识库介绍仍展示四个库的受众与主题');
+  assert.ok(mine.data.libraries.every((item) => item.summary && !/待补|未接入|knowledge_base\/|content_status|index_ready/.test(item.summary)),
+    '用户介绍不能包含维护说明');
   for (const name of ['choose', 'bind', 'codeChange', 'submitCode']) assert.equal(typeof mine[name], 'undefined', '我的不能提供修改角色方法 ' + name);
   const guestLoginCount = loginRequests();
   app.pendingQuestion = '退出前的问题';
@@ -370,6 +373,7 @@ async function run() {
   home.onShow();
   assert.deepEqual(home.data.questions, [], '教师登录不能继续展示学生常问');
   await until(() => !home.data.loading && home.loadedFor === 'teacher', '教师首页常问');
+  assert.ok(!home.data.libraryNames.includes('教职工手册'), '教师可查清单不能包含尚无语料的库');
   assert.equal(home.data.suggestionsTitle, '教师、行政人员常问');
   assert.equal(home.data.questions.length, 5);
   assert.notDeepEqual(home.data.questions, studentQuestions);

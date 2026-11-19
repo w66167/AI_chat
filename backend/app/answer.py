@@ -180,7 +180,6 @@ def respond(req, cfg=None, retriever=None, identity=None, generate=None):
     question = req.question.strip()
 
     # ① 先按身份确定「能访问哪些知识库」和「其中哪些真的能检索」（FR-16）
-    accessible = libraries.for_identity(identity)
     searchable = libraries.searchable_for(identity)
     pending = libraries.pending_for(identity)
     base = {
@@ -194,12 +193,10 @@ def respond(req, cfg=None, retriever=None, identity=None, generate=None):
 
     # ② 身份对应的知识库一个都没接入检索：如实说明，不拿别人的知识库硬答
     if not searchable:
-        reason = ('按当前身份（%s）可访问的知识库是「%s」，但都还没有接入在线检索服务，'
-                  '本次已改用本机已发布的公开知识回答。' % (identity, _names(accessible)))
+        reason = '当前可查询的资料不足，请通过学校官网或相关部门核实。'
         return _resp(base,
                      behavior='refuse_noanswer',
-                     answer='当前身份可访问的知识库（%s）尚未接入在线检索，服务端没有可检索的知识来源。'
-                            % _names(accessible),
+                     answer=reason,
                      citations=[], confidence=0.0, suggestions=[], boundary=None,
                      degraded=True, kb_gap=True, kb_gap_reason=reason,
                      knowledge_version='', latency_ms=0)
@@ -303,10 +300,7 @@ def respond(req, cfg=None, retriever=None, identity=None, generate=None):
     if CAVEAT_RE.search(question):     # 时效类问题追加「以现行文件为准」
         answer += CAVEAT_TEXT
         behavior = 'answer_with_caveat'
-    # 本次能访问、但还没接入检索的知识库要在答案末尾说清楚，避免「以为查过了全部知识」
-    if pending:
-        answer += '\n\n（说明：你的身份还可以访问「%s」，该知识库尚未接入检索，本次没有检索它。）' \
-                  % _names(pending)
+    # 维护状态仅保留在 kb_pending；用户通过真实引用核对本次回答的依据。
     return _resp(base,
                  behavior=behavior, answer=answer, citations=citations,
                  confidence=round(confidence, 3),
@@ -323,9 +317,6 @@ def _refuse(question, session_id, base, searchable, pending, confidence=0.0):
     """无答案：明确说查不到，并给出「去哪儿问」，不编造任何事实。"""
     answer = ('当前检索的知识库（%s）里没有足够可靠的依据回答这个问题，我不做推测。'
               '建议你确认具体事项，或通过学校官网/所属部门公布的渠道核实。' % _names(searchable))
-    if pending:
-        answer += ('\n（另外：你的身份还可以访问「%s」，但该知识库尚未接入检索，本次没有检索它。）'
-                   % _names(pending))
     return _resp(base,
                  behavior='refuse_noanswer', answer=answer,
                  citations=[], confidence=round(confidence, 3), suggestions=[],

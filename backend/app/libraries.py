@@ -55,7 +55,7 @@ def searchable_for(identity_type):
 def pending_for(identity_type):
     """该身份能访问、但索引尚未建设的知识库。
 
-    要如实告诉用户「这次没查这个库」，否则就是拿别的库冒充全部知识。
+    供后台诊断维护状态；不追加到用户回答，实际检索范围由 knowledge_bases 和引用记录。
     """
     return [item for item in for_identity(identity_type) if not item.get('index_ready')]
 

@@ -125,6 +125,14 @@ assert.deepEqual(registry.libraries.filter((item) => item.index_ready).map((item
 // 按下标取会随注册表新增条目而错位，这里按 id 取
 const publicGuide = registry.libraries.find((item) => item.id === 'public-guide');
 const studentHandbook = registry.libraries.find((item) => item.id === 'student-handbook');
+const mineTemplate = readSource('pages/mine/mine.wxml');
+assert.ok(mineTemplate.includes('知识库介绍'));
+assert.ok(!/内容待补|content_status|index_ready/.test(mineTemplate), '知识库卡片不展示后台维护状态');
+for (const item of registry.libraries) {
+  assert.ok(item.summary.length > 20, item.id + ' 需要面向用户的介绍');
+  assert.ok(!/待补|未接入|knowledge_base\/|data\/|\.jsonl|\.py|content_status|index_ready/.test(item.summary),
+    item.id + ' 的介绍不能包含维护指引或技术路径');
+}
 assert.deepEqual(publicGuide.doc_index, [1, 3]);
 assert.deepEqual(studentHandbook.doc_index, [4, 28]);
 assert.equal(publicGuide.documents.length + studentHandbook.documents.length, 28, '两个库合起来是手册的 28 份文件');
@@ -151,7 +159,7 @@ function session(identity, extra) {
   return Object.assign({
     user: { id: 'dev-1', identity_type: identity }, identity_type: identity, auth_mode: 'dev',
     binding: { student: 'self', teacher: 'code' },
-    libraries: registry.libraries.map((item) => ({ id: item.id, name: item.name, content_status: item.content_status,
+    libraries: registry.libraries.map((item) => ({ id: item.id, name: item.name, content_status: item.content_status, index_ready: item.index_ready,
       summary: item.summary, accessible: item.audience.indexOf(identity) >= 0 }))
   }, extra || {});
 }
@@ -170,6 +178,14 @@ store.signOut();
 store.completeLogin(session('guest', { token: 'guest-token' }));
 assert.equal(store.isLoggedIn(), true);
 assert.equal(store.read().loginComplete, true);
+const oldProfile = session('guest');
+oldProfile.libraries.forEach((item) => { item.summary = '旧缓存：内容待补，请按 knowledge_base/README.md 接入'; });
+store.setSession(oldProfile);
+assert.deepEqual(store.libraries().map((item) => item.summary), registry.libraries.map((item) => item.summary),
+  '旧服务或会话缓存不能恢复用户卡片中的维护说明');
+assert.deepEqual(store.accessibleLibraries().map((item) => item.id), ['public-guide', 'visitor-guide'], '介绍覆盖不改变权限');
+assert.deepEqual(store.searchableLibraries().map((item) => item.id), ['public-guide'], '可查清单只包含实际可检索的库');
+assert.equal(store.libraries().find((item) => item.id === 'visitor-guide').content_status, 'pending', '后台状态必须保留');
 
 // ---- 游客对话只在内存里
 const question = { id: 'q1', speaker: 'user', text: '对处分不服可以申诉吗' };

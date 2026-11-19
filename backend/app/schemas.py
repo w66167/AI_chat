@@ -140,8 +140,8 @@ class AskResponse(BaseModel):
     knowledge_bases: List[KnowledgeBaseBrief] = Field(default_factory=list,
                                                       description='本次实际检索的知识库（按身份路由）')
     kb_pending: List[str] = Field(default_factory=list,
-                                  description='身份可访问、但尚未接入检索的知识库名称，回答里会声明没检索它')
-    kb_gap: bool = Field(False, description='为真表示该身份的知识库都没接入检索，客户端应改用本机知识')
+                                  description='身份可访问、但尚未接入检索的知识库名称，仅供后台诊断，不展示在用户回答中')
+    kb_gap: bool = Field(False, description='为真表示当前身份没有可检索资料；客户端展示资料不足提示，不使用本机知识代答')
     kb_gap_reason: str = Field('', description='kb_gap 为真时的原因说明，可直接展示给用户')
     latency_ms: int = Field(0, description='服务端处理耗时')
     answer_mode: str = Field('', description='generated=大模型依据条文组织的回答；excerpt=条文原文；空=未作答')

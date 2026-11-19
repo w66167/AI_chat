@@ -28,7 +28,7 @@
       "app": true,
       "avatar": "师",
       "history": true,
-      "description": "教师、行政人员：可查内容同学生，另可访问教职工手册"
+      "description": "教师、行政人员：了解教育法规与学生管理制度，保留本人提问历史"
     },
     {
       "id": "maintainer",
@@ -64,7 +64,7 @@
       "content_status": "ready",
       "index_ready": true,
       "scope_text": "全国普通高等学校 · 教育部规章",
-      "summary": "学生手册收录的三份国家层面文件：《普通高等学校学生管理规定》《高等学校学生行为准则》《学生伤害事故处理办法》。属公开法规，游客登录后可查。",
+      "summary": "涵盖高校学生管理、学生行为规范和校园伤害事故处理等国家教育法规，帮助了解学生的权利与义务，以及学校管理的基本要求。",
       "documents": [
         {
           "title": "《普通高等学校学生管理规定》",
@@ -102,7 +102,7 @@
       "content_status": "pending",
       "index_ready": false,
       "scope_text": "杭州电子科技大学 · 公众参观与校园导览",
-      "summary": "面向游客的参观预约、交通到校、校园导览、校史概况与访客服务信息。内容待补：需要学校公开发布的参观信息作为语料，核验后按 knowledge_base/README.md 的步骤接入。",
+      "summary": "面向来校访客的校园参观指南，关注参观预约、交通到校、校园导览、校史概况与访客服务等主题。",
       "documents": [
         {
           "title": "杭州电子科技大学游客参观指南",
@@ -126,7 +126,7 @@
       "content_status": "ready",
       "index_ready": true,
       "scope_text": "杭州电子科技大学 · 全日制本科生 · 2017 年版手册口径",
-      "summary": "《杭州电子科技大学学生手册》（2017 年 9 月版）收录的 25 份校内规章：学籍、成绩、转专业、学位、纪律处分、申诉、奖助、住宿、医疗、社团等。登录并确认在校身份后可查。",
+      "summary": "面向在校学生的学习与校园生活指南，涵盖学籍、课程与考试、转专业、毕业学位、奖助、住宿、医疗和社团等规章。依据《杭州电子科技大学学生手册》2017 年 9 月版。",
       "documents": [
         {
           "title": "《杭州电子科技大学本科学生学籍管理规定》",
@@ -297,7 +297,7 @@
       "content_status": "pending",
       "index_ready": false,
       "scope_text": "杭州电子科技大学 · 在职教职工",
-      "summary": "人事、教学与行政管理制度。内容待补：语料按同样的切块格式放到 data/staff_chunks.jsonl 后，把 content_status 改成 ready、index_ready 由 build_index.py 决定。",
+      "summary": "面向教师与行政人员的制度指南，以人事管理、教学工作和日常行政事务为主题，关注校内工作规范与办事要求。",
       "documents": [
         {
           "title": "人事与教学管理制度汇编",

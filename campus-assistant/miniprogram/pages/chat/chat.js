@@ -35,7 +35,7 @@ Page({
       messages,
       roleName: role.name,
       isGuest: role.identityType === 'guest',
-      libraryNames: store.accessibleLibraries().map((item) => item.name).join('、'),
+      libraryNames: store.searchableLibraries().map((item) => item.name).join('、'),
       scrollTarget: messages.length ? 'msg-' + messages[messages.length - 1].id : ''
     });
   },

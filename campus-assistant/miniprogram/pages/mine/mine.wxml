@@ -15,14 +15,12 @@
   <view class="me-note" wx:elif="{{!isGuest}}">身份为自行声明，尚未经学校统一身份认证核验。</view>
 
   <view class="section">
-    <view class="section-head"><text class="section-title">我能查什么</text></view>
+    <view class="section-head"><text class="section-title">知识库介绍</text></view>
     <view class="panel">
       <view class="row library" wx:for="{{libraries}}" wx:key="id">
         <view class="row-main">
           <view class="library-head">
             <text class="row-title">{{item.name}}</text>
-            <text class="chip {{item.accessible ? '' : 'chip-gray'}}" wx:if="{{item.content_status === 'ready'}}">{{item.accessible ? '可查' : '需相应身份'}}</text>
-            <text class="chip chip-warn" wx:else>内容待补</text>
           </view>
           <view class="row-desc">{{item.summary}}</view>
         </view>

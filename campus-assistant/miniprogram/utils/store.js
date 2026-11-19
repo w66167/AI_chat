@@ -94,7 +94,14 @@ function profile() { return read().profile; }
 // 两者同源（knowledge_base/data/libraries.json），不会各说各话。
 function libraries() {
   const current = profile();
-  if (current && current.libraries.length) return current.libraries;
+  if (current && current.libraries.length) {
+    // 介绍随小程序一同发布；旧登录缓存或尚未重启的服务不能把维护说明带回页面。
+    // accessible 等权限字段仍完全使用服务端结果。
+    return current.libraries.map((item) => {
+      const definition = registry.libraries.find((entry) => entry.id === item.id);
+      return Object.assign({}, item, { summary: definition ? definition.summary : (item.summary || '') });
+    });
+  }
   const who = identity();
   return registry.libraries.map((item) => ({
     id: item.id, name: item.name, version: item.version, content_status: item.content_status,
@@ -104,6 +111,8 @@ function libraries() {
   }));
 }
 function accessibleLibraries() { return libraries().filter((item) => item.accessible); }
+// “可查”只列出有权限且实际接入检索的库，维护状态不作为用户端标签。
+function searchableLibraries() { return accessibleLibraries().filter((item) => item.index_ready); }
 
 // ---------------------------------------------------------------- 当前对话
 function keepsHistory() { return role().history; }
@@ -144,7 +153,7 @@ function signOut() {
 }
 
 module.exports = {
-  init, read, id, roles, role, roleByIdentity, identity, profile, libraries, accessibleLibraries,
+  init, read, id, roles, role, roleByIdentity, identity, profile, libraries, accessibleLibraries, searchableLibraries,
   deviceId, token, clearToken, isLoggedIn, setSession, completeLogin, signOut,
   keepsHistory, getMessages, appendMessages, updateMessage, clearMessages
 };
